@@ -429,8 +429,16 @@
           </select>
         </div>
         <div class="form-field">
-          <label>Emoji do sonho</label>
+          <label>Emoji (se não houver foto)</label>
           <input name="emoji" placeholder="✈️" maxlength="4">
+        </div>
+        <div class="form-field full">
+          <label>📷 Foto do sonho (vira a capa do cartão)</label>
+          <input type="file" id="dreamPhotoInput" accept="image/*">
+          <div id="dreamPhotoPreview" style="display:none; margin-top:10px; align-items:center; gap:10px;">
+            <img id="dreamPhotoImg" alt="Prévia da foto" style="height:72px; width:96px; object-fit:cover; border-radius:10px; border:1px solid var(--border);">
+            <button type="button" class="mini-btn danger" id="dreamPhotoRemove">🗑 Remover foto</button>
+          </div>
         </div>
         <div class="form-field">
           <label>Valor da meta (R$)</label>

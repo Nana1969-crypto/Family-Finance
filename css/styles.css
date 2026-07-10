@@ -806,18 +806,61 @@ table.data tr:hover td { background: var(--surface-2); }
 
 .dream-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 
+/* Capa com foto — ocupa ~3/4 do cartão; o 1/4 restante traz progresso e valores */
 .dream-cover {
-  height: 120px;
+  position: relative;
+  height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 46px;
+  font-size: 64px;
+  overflow: hidden;
 }
 
-.dream-body { padding: 15px 17px 17px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
-.dream-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.dream-body h4 { font-size: 15.5px; letter-spacing: -0.01em; }
-.dream-body .desc { font-size: 12.5px; color: var(--text-3); }
+.dream-cover .dream-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dream-cover .cover-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 42px 16px 12px;
+  background: linear-gradient(180deg, transparent, rgba(6, 6, 12, 0.82));
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cover-overlay h4 {
+  color: #fff;
+  font-size: 16.5px;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
+.cover-overlay .desc {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  margin-top: 2px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.cover-overlay .dream-cat {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  backdrop-filter: blur(4px);
+  flex-shrink: 0;
+}
+
+.dream-body { padding: 13px 16px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 
 .dream-cat {
   font-size: 11px;

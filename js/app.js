@@ -996,13 +996,17 @@
     const prioLabel = { alta: "● Alta", media: "● Média", baixa: "● Baixa" }[d.prioridade] || "";
     return `
       <div class="dream-card">
-        <div class="dream-cover" style="background:${cat.grad}">${esc(d.emoji || "🌟")}</div>
-        <div class="dream-body">
-          <div class="dream-top">
-            <h4>${esc(d.titulo)}</h4>
+        <div class="dream-cover" style="background:${cat.grad}">
+          ${d.foto ? `<img class="dream-photo" src="${d.foto}" alt="${esc(d.titulo)}">` : esc(d.emoji || "🌟")}
+          <div class="cover-overlay">
+            <div>
+              <h4>${esc(d.titulo)}</h4>
+              ${d.descricao ? `<div class="desc">${esc(d.descricao)}</div>` : ""}
+            </div>
             <span class="dream-cat">${cat.label}</span>
           </div>
-          ${d.descricao ? `<div class="desc">${esc(d.descricao)}</div>` : ""}
+        </div>
+        <div class="dream-body">
           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
           <div class="dream-nums">
             <span><strong>${fmt(d.valorEconomizado)}</strong> de ${fmt(d.valorMeta)}</span>
@@ -1316,6 +1320,38 @@
 
   let editingTxId = null;
   let editingDreamId = null;
+  // foto do sonho no modal: undefined = sem mudança, null = remover, string = nova dataURL
+  let pendingDreamPhoto;
+
+  // redimensiona a imagem (máx. 1000px, JPEG) para caber no armazenamento do navegador
+  function resizeImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1000;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("imagem inválida")); };
+      img.src = url;
+    });
+  }
+
+  function setDreamPhotoPreview(dataUrl) {
+    const box = $("#dreamPhotoPreview");
+    if (dataUrl) {
+      $("#dreamPhotoImg").src = dataUrl;
+      box.style.display = "flex";
+    } else {
+      box.style.display = "none";
+    }
+  }
 
   function openTxModal(txId = null) {
     editingTxId = txId;
@@ -1342,6 +1378,9 @@
     editingDreamId = dreamId;
     const form = $("#dreamForm");
     form.reset();
+    pendingDreamPhoto = undefined;
+    $("#dreamPhotoInput").value = "";
+    setDreamPhotoPreview(null);
     $("#dreamModalTitle").textContent = dreamId ? "Editar sonho" : "Novo sonho";
 
     // filha só cria sonhos na própria categoria
@@ -1364,6 +1403,7 @@
       form.valorEconomizado.value = d.valorEconomizado;
       form.prazo.value = d.prazo || "";
       form.prioridade.value = d.prioridade;
+      setDreamPhotoPreview(d.foto || null);
     }
     openModal("dream");
   }
@@ -1466,10 +1506,12 @@
         prioridade: f.get("prioridade"),
       };
       if (editingDreamId) {
-        Object.assign(state.dreams.find((d) => d.id === editingDreamId), data);
+        const d = state.dreams.find((x) => x.id === editingDreamId);
+        Object.assign(d, data);
+        if (pendingDreamPhoto !== undefined) d.foto = pendingDreamPhoto;
         toast("Sonho atualizado! ✨");
       } else {
-        state.dreams.push({ id: uid(), createdBy: state.currentUser, ...data });
+        state.dreams.push({ id: uid(), createdBy: state.currentUser, foto: pendingDreamPhoto || null, ...data });
         toast("Novo sonho no mural da família! 🌈");
       }
       editingDreamId = null;
@@ -1481,6 +1523,26 @@
     $("#docMetaForm").addEventListener("submit", (e) => {
       e.preventDefault();
       saveUpload(new FormData(e.target));
+    });
+
+    // foto do sonho
+    $("#dreamPhotoInput").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        pendingDreamPhoto = await resizeImage(file);
+        setDreamPhotoPreview(pendingDreamPhoto);
+        toast("📷 Foto pronta! Salve o sonho para aplicar.");
+      } catch {
+        toast("⚠️ Não consegui ler essa imagem — tente outro arquivo.");
+        e.target.value = "";
+      }
+    });
+
+    $("#dreamPhotoRemove").addEventListener("click", () => {
+      pendingDreamPhoto = null;
+      $("#dreamPhotoInput").value = "";
+      setDreamPhotoPreview(null);
     });
 
     // cofrinho
