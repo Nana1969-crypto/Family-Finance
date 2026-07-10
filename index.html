@@ -280,6 +280,86 @@
         </div>
       </section>
 
+      <!-- Relatórios -->
+      <section class="page" id="page-relatorios">
+        <div class="page-header">
+          <div>
+            <h2>Relatórios</h2>
+            <p>Resumo mensal, comparativos e exportação dos dados da família.</p>
+          </div>
+          <div class="rep-controls" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input type="month" id="repMonth" style="padding:9px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-1);">
+            <button class="btn btn-ghost" id="repPrint">🖨 Imprimir / PDF</button>
+            <button class="btn btn-primary" id="repCsv">⬇ Exportar CSV</button>
+          </div>
+        </div>
+        <div class="stat-grid" id="repStats"></div>
+        <div class="grid-2-even">
+          <div class="panel">
+            <div class="panel-title"><h3>Por proprietário</h3><span class="hint" id="repMonthLabel"></span></div>
+            <div class="table-wrap" id="repOwner"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>Despesas por categoria</h3></div>
+            <div class="table-wrap" id="repCat"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><h3>Comparativo — últimos 6 meses</h3></div>
+          <div class="table-wrap" id="repCompare"></div>
+        </div>
+      </section>
+
+      <!-- Configurações -->
+      <section class="page" id="page-config">
+        <div class="page-header">
+          <div>
+            <h2>Configurações</h2>
+            <p>Personalize a família, os membros e as categorias do app.</p>
+          </div>
+        </div>
+        <div class="grid-2-even">
+          <div class="panel">
+            <div class="panel-title"><h3>👨‍👩‍👧 Família</h3></div>
+            <div class="form-grid">
+              <div class="form-field full">
+                <label>Nome da família (aparece no Vision Board)</label>
+                <input id="cfgFamilyName" placeholder="Família Oliveira">
+              </div>
+              <div class="form-field">
+                <label>👨 Nome do pai</label>
+                <input id="cfgNamePai">
+              </div>
+              <div class="form-field">
+                <label>👩 Nome da mãe</label>
+                <input id="cfgNameMae">
+              </div>
+              <div class="form-field">
+                <label>👧 Nome da filha</label>
+                <input id="cfgNameFilha">
+              </div>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button class="btn btn-primary" id="cfgSave">Salvar alterações</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>🏷️ Categorias personalizadas</h3></div>
+            <p style="font-size:12.5px; color:var(--text-3); margin-bottom:12px;">As categorias padrão não podem ser removidas; as suas, sim.</p>
+            <div class="filter-row" id="cfgCatList" style="margin-bottom:14px;"></div>
+            <div style="display:flex; gap:8px;">
+              <input id="cfgNewCat" placeholder="Nova categoria (ex.: Pets)" style="flex:1; padding:9px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-1);">
+              <button class="btn btn-green" id="cfgAddCat">+ Adicionar</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="border-color:rgba(248,113,113,0.3);">
+          <div class="panel-title"><h3>⚠️ Zona de atenção</h3></div>
+          <p style="font-size:13px; color:var(--text-3); margin-bottom:12px;">Apaga todos os dados salvos neste navegador (lançamentos, uploads, sonhos) e restaura os dados de demonstração.</p>
+          <button class="btn btn-danger-ghost" id="cfgReset">🔄 Restaurar dados de demonstração</button>
+        </div>
+      </section>
+
     </main>
   </div>
 

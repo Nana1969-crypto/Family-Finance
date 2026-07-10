@@ -30,6 +30,8 @@ Os dados ficam salvos no navegador (`localStorage`) — nada sai da sua máquina
 | 📅 **Calendário** | Vencimentos, recebimentos e prazos de sonhos com as cores das tags |
 | 🌈 **Vision Board** | Mural de sonhos da família com progresso, prioridade, prazo e frase motivacional |
 | 🌟 **Área da filha** | Cofrinho virtual, metas pessoais, missões, medalhas, quiz e simulador de poupança |
+| 📈 **Relatórios** | Resumo mensal, individual e consolidado por proprietário, despesas por categoria, comparativo de 6 meses, exportação CSV e impressão/PDF |
+| ⚙️ **Configurações** | Nome da família, nomes dos membros, categorias personalizadas e restauração dos dados de demonstração |
 
 ⭐ = áreas novas solicitadas pelo cliente (upload de documentação e de faturas,
 comuns aos pais).

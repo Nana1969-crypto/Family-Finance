@@ -1063,3 +1063,12 @@ table.data tr:hover td { background: var(--surface-2); }
 
 .ev-dots { display: flex; gap: 3px; flex-wrap: wrap; }
 .ev-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ---------- Impressão (Relatórios → PDF) ---------- */
+@media print {
+  .sidebar, .mobile-topbar, .rep-controls, .toast, .chart-tooltip { display: none !important; }
+  .app-shell.active { display: block; }
+  .main { padding: 0; }
+  body { background: #fff; }
+  .panel, .stat-card { break-inside: avoid; box-shadow: none; }
+}

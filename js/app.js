@@ -48,6 +48,10 @@
     filha: { name: "Sofia", role: "16 anos · educação financeira", type: "dep", avatar: "👧", cls: "filha" },
   };
 
+  // nome exibido — personalizável em Configurações
+  const uname = (key) => (state.memberNames && state.memberNames[key]) || USERS[key]?.name || "—";
+  const allCategories = () => [...CATEGORIES, ...(state.customCategories || [])];
+
   /* ---------------- utilidades ---------------- */
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -143,6 +147,8 @@
 
     return {
       familyName: "Família Oliveira",
+      memberNames: { pai: "Eduardo", mae: "Adriana", filha: "Sofia" },
+      customCategories: [],
       theme: "dark",
       currentUser: null,
       transactions: txs,
@@ -202,7 +208,13 @@
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) { state = JSON.parse(raw); return; }
+      if (raw) {
+        state = JSON.parse(raw);
+        // migração de estados salvos por versões anteriores
+        if (!state.memberNames) state.memberNames = { pai: USERS.pai.name, mae: USERS.mae.name, filha: USERS.filha.name };
+        if (!state.customCategories) state.customCategories = [];
+        return;
+      }
     } catch (e) { /* estado corrompido — recomeça */ }
     state = seedState();
     save();
@@ -256,6 +268,9 @@
       { section: "Planejamento" },
       { page: "calendario", ico: "📅", label: "Calendário" },
       { page: "visionboard", ico: "🌈", label: "Vision Board" },
+      { page: "relatorios", ico: "📈", label: "Relatórios" },
+      { section: "Sistema" },
+      { page: "config", ico: "⚙️", label: "Configurações" },
     ],
     dep: [
       { section: "Meu espaço" },
@@ -273,7 +288,7 @@
     $("#profileList").innerHTML = Object.entries(USERS).map(([key, u]) => `
       <button class="profile-btn" data-login="${key}">
         <span class="profile-avatar ${u.cls}">${u.avatar}</span>
-        <span><strong>${u.name}</strong><span>${u.role}</span></span>
+        <span><strong>${esc(uname(key))}</strong><span>${u.role}</span></span>
         <span class="profile-role ${u.type}">${u.type === "admin" ? "Admin" : "Dependente"}</span>
       </button>
     `).join("");
@@ -299,7 +314,7 @@
     const u = USERS[state.currentUser];
     $("#userChip").innerHTML = `
       <span class="profile-avatar ${u.cls}">${u.avatar}</span>
-      <span><strong>${u.name}</strong><span>${u.type === "admin" ? "Administrador(a)" : "Dependente"}</span></span>`;
+      <span><strong>${esc(uname(state.currentUser))}</strong><span>${u.type === "admin" ? "Administrador(a)" : "Dependente"}</span></span>`;
 
     $("#navContainer").innerHTML = NAV[u.type].map((item) =>
       item.section
@@ -335,6 +350,8 @@
       visionboard: renderVisionBoard,
       "painel-filha": renderFilha,
       educacao: renderEducacao,
+      relatorios: renderReports,
+      config: renderConfig,
     };
     (renders[page] || (() => {}))();
   }
@@ -356,10 +373,9 @@
   }
 
   function renderDashboard() {
-    const u = USERS[state.currentUser];
     const h = new Date().getHours();
     const saud = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-    $("#dashGreeting").textContent = `${saud}, ${u.name} 👋`;
+    $("#dashGreeting").textContent = `${saud}, ${uname(state.currentUser)} 👋`;
 
     const cur = monthTotals(0);
     const saldoContas = state.accounts.reduce((s, a) => s + a.saldo, 0);
@@ -803,7 +819,7 @@
           <div class="doc-name">${esc(d.nome)}</div>
           ${d.descricao ? `<div class="doc-meta">${esc(d.descricao)}</div>` : ""}
           <div class="doc-meta">
-            <span>👤 ${USERS[d.enviadoPor]?.name || "—"}</span>
+            <span>👤 ${esc(uname(d.enviadoPor))}</span>
             <span>📅 ${fmtDate(d.data)}</span>
             ${d.tamanho ? `<span>${fmtBytes(d.tamanho)}</span>` : ""}
           </div>
@@ -875,7 +891,7 @@
           </div>
           <div class="doc-meta">
             <span>⏰ vence ${fmtDate(inv.vencimento)}</span>
-            <span>👤 ${USERS[inv.enviadoPor]?.name || "—"}</span>
+            <span>👤 ${esc(uname(inv.enviadoPor))}</span>
           </div>
           <div class="doc-actions">
             ${inv.status !== "paga" ? `<button class="mini-btn pay" data-pay-inv="${inv.id}">✓ Paga</button>` : ""}
@@ -1045,7 +1061,7 @@
   /* ---------------- área da filha ---------------- */
 
   function renderFilha() {
-    $("#filhaGreeting").textContent = `Oi, ${USERS.filha.name}! 🌟`;
+    $("#filhaGreeting").textContent = `Oi, ${uname("filha")}! 🌟`;
     $("#piggyValue").textContent = fmt(state.piggy.saldo);
 
     $("#personalGoals").innerHTML = state.personalGoals.length ? state.personalGoals.map((g) => {
@@ -1149,6 +1165,150 @@
     $("#simHint").textContent = months > 0 ? `Rendendo ~0,7% ao mês, viraria ${fmt(comJuros)} 🌱` : "";
   }
 
+  /* ---------------- relatórios ---------------- */
+
+  let repMonthKey = monthKey(todayISO());
+
+  function txsOfMonth(k) {
+    return state.transactions.filter((t) => monthKey(t.vencimento) === k);
+  }
+
+  function monthLabel(k) {
+    const [y, m] = k.split("-").map(Number);
+    const l = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return l.charAt(0).toUpperCase() + l.slice(1);
+  }
+
+  function renderReports() {
+    $("#repMonth").value = repMonthKey;
+    $("#repMonthLabel").textContent = monthLabel(repMonthKey);
+
+    const txs = txsOfMonth(repMonthKey);
+    const receitas = txs.filter((t) => t.type === "receita").reduce((s, t) => s + t.valor, 0);
+    const despesas = txs.filter((t) => t.type === "despesa").reduce((s, t) => s + t.valor, 0);
+    const economia = receitas - despesas;
+
+    $("#repStats").innerHTML = `
+      <div class="stat-card"><div class="label">Receitas</div><div class="value green">${fmt(receitas)}</div></div>
+      <div class="stat-card"><div class="label">Despesas</div><div class="value violet">${fmt(despesas)}</div></div>
+      <div class="stat-card"><div class="label">Economia</div><div class="value ${economia >= 0 ? "green" : "red"}">${fmt(economia)}</div>
+        <div class="delta">${receitas ? Math.round((economia / receitas) * 100) : 0}% das receitas</div></div>
+      <div class="stat-card"><div class="label">Lançamentos</div><div class="value">${txs.length}</div></div>`;
+
+    // por proprietário — relatórios individuais e consolidado
+    const owners = ["pai", "mae", "familia"];
+    $("#repOwner").innerHTML = `
+      <table class="data">
+        <thead><tr><th>Proprietário</th><th style="text-align:right">Receitas</th><th style="text-align:right">Despesas</th><th style="text-align:right">Saldo</th></tr></thead>
+        <tbody>${owners.map((o) => {
+          const r = txs.filter((t) => t.owner === o && t.type === "receita").reduce((s, t) => s + t.valor, 0);
+          const d = txs.filter((t) => t.owner === o && t.type === "despesa").reduce((s, t) => s + t.valor, 0);
+          return `<tr>
+            <td><span class="owner-chip">${OWNER_LABEL[o]}</span></td>
+            <td style="text-align:right" class="money pos">${fmt(r)}</td>
+            <td style="text-align:right" class="money">${fmt(d)}</td>
+            <td style="text-align:right" class="money ${r - d >= 0 ? "pos" : ""}">${fmt(r - d)}</td>
+          </tr>`;
+        }).join("")}
+        <tr>
+          <td><strong>Consolidado</strong></td>
+          <td style="text-align:right" class="money pos"><strong>${fmt(receitas)}</strong></td>
+          <td style="text-align:right" class="money"><strong>${fmt(despesas)}</strong></td>
+          <td style="text-align:right" class="money ${economia >= 0 ? "pos" : ""}"><strong>${fmt(economia)}</strong></td>
+        </tr>
+        </tbody>
+      </table>`;
+
+    // despesas por categoria
+    const byCat = {};
+    txs.filter((t) => t.type === "despesa").forEach((t) => { byCat[t.categoria] = (byCat[t.categoria] || 0) + t.valor; });
+    const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+    $("#repCat").innerHTML = cats.length ? `
+      <table class="data">
+        <thead><tr><th>Categoria</th><th style="text-align:right">Valor</th><th style="text-align:right">% do total</th></tr></thead>
+        <tbody>${cats.map(([c, v]) => `
+          <tr>
+            <td>${esc(c)}</td>
+            <td style="text-align:right" class="money">${fmt(v)}</td>
+            <td style="text-align:right; color:var(--text-3)">${despesas ? Math.round((v / despesas) * 100) : 0}%</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>` : `<div class="empty-state">Sem despesas neste mês.</div>`;
+
+    // comparativo dos últimos 6 meses
+    const rows = [];
+    for (let off = -5; off <= 0; off++) {
+      const t = monthTotals(off);
+      rows.push(t);
+    }
+    $("#repCompare").innerHTML = `
+      <table class="data">
+        <thead><tr><th>Mês</th><th style="text-align:right">Receitas</th><th style="text-align:right">Despesas</th><th style="text-align:right">Economia</th><th style="text-align:right">Taxa de poupança</th></tr></thead>
+        <tbody>${rows.map((r) => `
+          <tr>
+            <td>${monthLabel(r.key)}</td>
+            <td style="text-align:right" class="money pos">${fmt(r.receitas)}</td>
+            <td style="text-align:right" class="money">${fmt(r.despesas)}</td>
+            <td style="text-align:right" class="money ${r.receitas - r.despesas >= 0 ? "pos" : ""}">${fmt(r.receitas - r.despesas)}</td>
+            <td style="text-align:right">${r.receitas ? Math.round(((r.receitas - r.despesas) / r.receitas) * 100) : 0}%</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  function exportCsv() {
+    const txs = txsOfMonth(repMonthKey);
+    if (!txs.length) { toast("Nenhum lançamento no mês selecionado."); return; }
+    const header = ["Tipo", "Descrição", "Proprietário", "Categoria", "Data", "Status", "Recorrente", "Valor (R$)"];
+    const rows = txs.map((t) => [
+      t.type === "receita" ? "Receita" : "Despesa",
+      `"${(t.desc || "").replace(/"/g, '""')}"`,
+      { pai: "Pai", mae: "Mãe", familia: "Família" }[t.owner] || t.owner,
+      t.categoria,
+      fmtDate(t.vencimento),
+      t.pago ? "Paga" : (TAGS[txTag(t)]?.label || "Agendada"),
+      t.recorrente ? "Sim" : "Não",
+      String(t.valor).replace(".", ","),
+    ]);
+    // BOM + ponto-e-vírgula para abrir corretamente no Excel pt-BR
+    const csv = "﻿" + [header, ...rows].map((r) => r.join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `family-finance-${repMonthKey}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("📊 CSV exportado!");
+  }
+
+  function printReport() {
+    // imprime sempre no tema claro para economizar tinta e manter contraste no papel
+    const prev = state.theme;
+    document.documentElement.dataset.theme = "light";
+    const restore = () => { document.documentElement.dataset.theme = prev; window.removeEventListener("afterprint", restore); };
+    window.addEventListener("afterprint", restore);
+    window.print();
+  }
+
+  /* ---------------- configurações ---------------- */
+
+  function renderConfig() {
+    $("#cfgFamilyName").value = state.familyName;
+    $("#cfgNamePai").value = uname("pai");
+    $("#cfgNameMae").value = uname("mae");
+    $("#cfgNameFilha").value = uname("filha");
+
+    $("#cfgCatList").innerHTML = [
+      ...CATEGORIES.map((c) => `<span class="filter-chip" style="cursor:default">${esc(c)}</span>`),
+      ...(state.customCategories || []).map((c) =>
+        `<span class="filter-chip active">${esc(c)} <button data-rm-cat="${esc(c)}" style="background:none;border:none;color:inherit;font-weight:700;padding:0 0 0 4px;">×</button></span>`),
+    ].join("");
+
+    $$("[data-rm-cat]", $("#cfgCatList")).forEach((b) => b.addEventListener("click", () => {
+      state.customCategories = state.customCategories.filter((c) => c !== b.dataset.rmCat);
+      save(); renderConfig(); toast("Categoria removida.");
+    }));
+  }
+
   /* ---------------- modais ---------------- */
 
   function openModal(name) { $(`#modal-${name}`).classList.add("active"); }
@@ -1161,7 +1321,7 @@
     editingTxId = txId;
     const form = $("#txForm");
     form.reset();
-    $("#txCategorySelect").innerHTML = CATEGORIES.map((c) => `<option>${c}</option>`).join("");
+    $("#txCategorySelect").innerHTML = allCategories().map((c) => `<option>${esc(c)}</option>`).join("");
     $("#txModalTitle").textContent = txId ? "Editar lançamento" : "Novo lançamento";
     if (txId) {
       const t = state.transactions.find((x) => x.id === txId);
@@ -1345,6 +1505,43 @@
 
     // simulador
     ["#simMonthly", "#simMonths"].forEach((id) => $(id).addEventListener("input", updateSim));
+
+    // relatórios
+    $("#repMonth").addEventListener("change", () => {
+      if ($("#repMonth").value) { repMonthKey = $("#repMonth").value; renderReports(); }
+    });
+    $("#repCsv").addEventListener("click", exportCsv);
+    $("#repPrint").addEventListener("click", printReport);
+
+    // configurações
+    $("#cfgSave").addEventListener("click", () => {
+      state.familyName = $("#cfgFamilyName").value.trim() || state.familyName;
+      state.memberNames = {
+        pai: $("#cfgNamePai").value.trim() || uname("pai"),
+        mae: $("#cfgNameMae").value.trim() || uname("mae"),
+        filha: $("#cfgNameFilha").value.trim() || uname("filha"),
+      };
+      save();
+      renderShell();
+      renderLogin();
+      goto("config");
+      toast("✅ Configurações salvas!");
+    });
+
+    $("#cfgAddCat").addEventListener("click", () => {
+      const c = $("#cfgNewCat").value.trim();
+      if (!c) return;
+      if (allCategories().some((x) => x.toLowerCase() === c.toLowerCase())) { toast("Essa categoria já existe."); return; }
+      state.customCategories.push(c);
+      $("#cfgNewCat").value = "";
+      save(); renderConfig(); toast(`🏷️ Categoria "${c}" adicionada!`);
+    });
+
+    $("#cfgReset").addEventListener("click", () => {
+      if (!confirm("Apagar TODOS os dados deste navegador e restaurar a demonstração?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    });
 
     // dropzones (documentos + faturas)
     setupDropzone("#docDropzone", "#docFileInput", "doc");
