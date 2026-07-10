@@ -24,7 +24,7 @@
     "Escola", "Condomínio", "Plano de saúde", "Outros",
   ];
 
-  const OWNER_LABEL = { pai: "👨 Pai", mae: "👩 Mãe", familia: "👨‍👩‍👧 Família", filha: "👧 Filha" };
+  const OWNER_LABEL = { admin: "👤 Admin", familia: "👨‍👩‍👧 Família" };
 
   const TAGS = {
     vencida:    { label: "Vencida",       cls: "tag-vencida",    color: "var(--tag-red)" },
@@ -37,15 +37,13 @@
 
   const DREAM_CATS = {
     familia: { label: "🏠 Família", grad: "linear-gradient(135deg, rgba(124,58,237,.35), rgba(34,197,94,.25))" },
-    pai:     { label: "👨 Pai",     grad: "linear-gradient(135deg, rgba(139,92,246,.4), rgba(63,140,243,.25))" },
-    mae:     { label: "👩 Mãe",     grad: "linear-gradient(135deg, rgba(224,85,158,.35), rgba(139,92,246,.25))" },
-    filha:   { label: "👧 Filha",   grad: "linear-gradient(135deg, rgba(34,197,94,.35), rgba(250,204,21,.2))" },
+    admin:   { label: "👤 Admin",   grad: "linear-gradient(135deg, rgba(139,92,246,.4), rgba(63,140,243,.25))" },
+    dep:     { label: "🌟 Dependente", grad: "linear-gradient(135deg, rgba(34,197,94,.35), rgba(250,204,21,.2))" },
   };
 
   const USERS = {
-    pai:   { name: "Eduardo", role: "Corretor de seguros", type: "admin", avatar: "👨", cls: "pai" },
-    mae:   { name: "Adriana", role: "Empresária de marketing", type: "admin", avatar: "👩", cls: "mae" },
-    filha: { name: "Sofia", role: "16 anos · educação financeira", type: "dep", avatar: "👧", cls: "filha" },
+    admin: { name: "Admin", role: "Acesso completo às finanças da família", type: "admin", avatar: "👤", cls: "pai" },
+    dep:   { name: "Dependente", role: "Educação financeira, sonhos e missões", type: "dep", avatar: "🌟", cls: "filha" },
   };
 
   // nome exibido — personalizável em Configurações
@@ -116,11 +114,11 @@
       const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-08`;
       const v = 1 + ((off * 7) % 5 - 2) * 0.04; // variação determinística ±8%
       txs.push(
-        { id: uid(), type: "receita", desc: "Comissões de seguros", valor: Math.round(8600 * v), categoria: "Salário", owner: "pai", vencimento: iso, pago: true, recorrente: true },
-        { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: Math.round(9900 * (2 - v)), categoria: "Salário", owner: "mae", vencimento: iso, pago: true, recorrente: true },
+        { id: uid(), type: "receita", desc: "Comissões de seguros", valor: Math.round(8600 * v), categoria: "Salário", owner: "admin", vencimento: iso, pago: true, recorrente: true },
+        { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: Math.round(9900 * (2 - v)), categoria: "Salário", owner: "admin", vencimento: iso, pago: true, recorrente: true },
         { id: uid(), type: "despesa", desc: "Financiamento da casa", valor: 3200, categoria: "Moradia", owner: "familia", vencimento: iso, pago: true, recorrente: true },
         { id: uid(), type: "despesa", desc: "Supermercado", valor: Math.round(1750 * v), categoria: "Alimentação", owner: "familia", vencimento: iso, pago: true },
-        { id: uid(), type: "despesa", desc: "Escola da Sofia", valor: 1650, categoria: "Educação", owner: "familia", vencimento: iso, pago: true, recorrente: true },
+        { id: uid(), type: "despesa", desc: "Escola do(a) dependente", valor: 1650, categoria: "Educação", owner: "familia", vencimento: iso, pago: true, recorrente: true },
         { id: uid(), type: "despesa", desc: "Plano de saúde", valor: 980, categoria: "Saúde", owner: "familia", vencimento: iso, pago: true, recorrente: true },
         { id: uid(), type: "despesa", desc: "Combustível e transporte", valor: Math.round(880 * (2 - v)), categoria: "Transporte", owner: "familia", vencimento: iso, pago: true },
         { id: uid(), type: "despesa", desc: "Lazer em família", valor: Math.round(620 * v), categoria: "Lazer", owner: "familia", vencimento: iso, pago: true },
@@ -131,58 +129,58 @@
     // Mês atual — mistura de pagos e pendentes para exercitar as tags
     const thisMonth8 = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-05`;
     txs.push(
-      { id: uid(), type: "receita", desc: "Comissões de seguros", valor: 8900, categoria: "Salário", owner: "pai", vencimento: thisMonth8, pago: true, recorrente: true },
-      { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: 10200, categoria: "Salário", owner: "mae", vencimento: thisMonth8, pago: true, recorrente: true },
+      { id: uid(), type: "receita", desc: "Comissões de seguros", valor: 8900, categoria: "Salário", owner: "admin", vencimento: thisMonth8, pago: true, recorrente: true },
+      { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: 10200, categoria: "Salário", owner: "admin", vencimento: thisMonth8, pago: true, recorrente: true },
       { id: uid(), type: "despesa", desc: "Financiamento da casa", valor: 3200, categoria: "Moradia", owner: "familia", vencimento: thisMonth8, pago: true, recorrente: true },
-      { id: uid(), type: "despesa", desc: "Escola da Sofia", valor: 1650, categoria: "Educação", owner: "familia", vencimento: thisMonth8, pago: true, recorrente: true },
+      { id: uid(), type: "despesa", desc: "Escola do(a) dependente", valor: 1650, categoria: "Educação", owner: "familia", vencimento: thisMonth8, pago: true, recorrente: true },
       { id: uid(), type: "despesa", desc: "Supermercado", valor: 1920, categoria: "Alimentação", owner: "familia", vencimento: isoAddDays(-6), pago: true },
-      { id: uid(), type: "despesa", desc: "IPVA — parcela 4/6", valor: 480, categoria: "Impostos", owner: "pai", vencimento: isoAddDays(-3), pago: false },
+      { id: uid(), type: "despesa", desc: "IPVA — parcela 4/6", valor: 480, categoria: "Impostos", owner: "admin", vencimento: isoAddDays(-3), pago: false },
       { id: uid(), type: "despesa", desc: "Internet fibra", valor: 129.9, categoria: "Assinaturas", owner: "familia", vencimento: isoAddDays(0), pago: false, recorrente: true },
       { id: uid(), type: "despesa", desc: "Conta de energia", valor: 342.5, categoria: "Moradia", owner: "familia", vencimento: isoAddDays(3), pago: false },
       { id: uid(), type: "despesa", desc: "Streaming e assinaturas", valor: 190, categoria: "Assinaturas", owner: "familia", vencimento: isoAddDays(5), pago: false, recorrente: true },
       { id: uid(), type: "despesa", desc: "Fatura cartão Violeta Black", valor: 2680, categoria: "Outros", owner: "familia", vencimento: isoAddDays(12), pago: false },
-      { id: uid(), type: "despesa", desc: "Seguro do carro", valor: 310, categoria: "Seguros", owner: "pai", vencimento: isoAddDays(9), pago: false, recorrente: true },
+      { id: uid(), type: "despesa", desc: "Seguro do carro", valor: 310, categoria: "Seguros", owner: "admin", vencimento: isoAddDays(9), pago: false, recorrente: true },
       { id: uid(), type: "despesa", desc: "Aporte — Viagem Internacional", valor: 800, categoria: "Outros", owner: "familia", vencimento: isoAddDays(15), pago: false, metaLink: true },
     );
 
     return {
       familyName: "Família Oliveira",
-      memberNames: { pai: "Eduardo", mae: "Adriana", filha: "Sofia" },
+      memberNames: { admin: "Adriana", dep: "Sofia" },
       customCategories: [],
       theme: "dark",
       currentUser: null,
       transactions: txs,
       accounts: [
-        { id: uid(), banco: "Banco Violeta", tipo: "Conta corrente", owner: "pai", saldo: 6420.8 },
-        { id: uid(), banco: "Banco Esmeralda", tipo: "Conta corrente", owner: "mae", saldo: 8130.45 },
+        { id: uid(), banco: "Banco Violeta", tipo: "Conta corrente", owner: "admin", saldo: 6420.8 },
+        { id: uid(), banco: "Banco Esmeralda", tipo: "Conta corrente", owner: "admin", saldo: 8130.45 },
         { id: uid(), banco: "Banco Violeta", tipo: "Conta conjunta", owner: "familia", saldo: 4980.0 },
       ],
       cards: [
-        { id: uid(), nome: "Violeta Black", bandeira: "Mastercard", owner: "pai", limite: 15000, usado: 2680, fechamento: 28, vencimento: 10 },
-        { id: uid(), nome: "Esmeralda Gold", bandeira: "Visa", owner: "mae", limite: 12000, usado: 1840, fechamento: 25, vencimento: 5 },
+        { id: uid(), nome: "Violeta Black", bandeira: "Mastercard", owner: "admin", limite: 15000, usado: 2680, fechamento: 28, vencimento: 10 },
+        { id: uid(), nome: "Esmeralda Gold", bandeira: "Visa", owner: "admin", limite: 12000, usado: 1840, fechamento: 25, vencimento: 5 },
       ],
       investments: [
         { id: uid(), nome: "Tesouro Selic 2029", tipo: "Renda fixa", owner: "familia", valor: 38500 },
-        { id: uid(), nome: "CDB Banco Esmeralda", tipo: "Renda fixa", owner: "mae", valor: 21200 },
-        { id: uid(), nome: "Fundo de ações", tipo: "Renda variável", owner: "pai", valor: 14700 },
+        { id: uid(), nome: "CDB Banco Esmeralda", tipo: "Renda fixa", owner: "admin", valor: 21200 },
+        { id: uid(), nome: "Fundo de ações", tipo: "Renda variável", owner: "admin", valor: 14700 },
         { id: uid(), nome: "Reserva de emergência", tipo: "Liquidez diária", owner: "familia", valor: 26800 },
       ],
       dreams: [
-        { id: uid(), titulo: "Viagem Internacional", descricao: "Europa em família nas férias de julho", categoria: "familia", emoji: "✈️", valorMeta: 28000, valorEconomizado: 16800, prazo: isoAddDays(330), prioridade: "alta", createdBy: "mae" },
-        { id: uid(), titulo: "Casa Nova", descricao: "Entrada para a casa com quintal", categoria: "familia", emoji: "🏡", valorMeta: 120000, valorEconomizado: 41500, prazo: isoAddDays(900), prioridade: "media", createdBy: "pai" },
-        { id: uid(), titulo: "Carro do Pai", descricao: "Trocar o carro em 2027", categoria: "pai", emoji: "🚗", valorMeta: 45000, valorEconomizado: 12300, prazo: isoAddDays(540), prioridade: "baixa", createdBy: "pai" },
-        { id: uid(), titulo: "Intercâmbio no Canadá", descricao: "Curso de inglês de 6 meses", categoria: "filha", emoji: "🍁", valorMeta: 35000, valorEconomizado: 6200, prazo: isoAddDays(700), prioridade: "alta", createdBy: "filha" },
-        { id: uid(), titulo: "Notebook novo", descricao: "Para os estudos e projetos", categoria: "filha", emoji: "💻", valorMeta: 4500, valorEconomizado: 1850, prazo: isoAddDays(180), prioridade: "media", createdBy: "filha" },
-        { id: uid(), titulo: "Reserva Financeira", descricao: "12 meses de despesas guardados", categoria: "familia", emoji: "🛡️", valorMeta: 90000, valorEconomizado: 26800, prazo: isoAddDays(720), prioridade: "alta", createdBy: "mae" },
+        { id: uid(), titulo: "Viagem Internacional", descricao: "Europa em família nas férias de julho", categoria: "familia", emoji: "✈️", valorMeta: 28000, valorEconomizado: 16800, prazo: isoAddDays(330), prioridade: "alta", createdBy: "admin" },
+        { id: uid(), titulo: "Casa Nova", descricao: "Entrada para a casa com quintal", categoria: "familia", emoji: "🏡", valorMeta: 120000, valorEconomizado: 41500, prazo: isoAddDays(900), prioridade: "media", createdBy: "admin" },
+        { id: uid(), titulo: "Carro Novo", descricao: "Trocar o carro em 2027", categoria: "admin", emoji: "🚗", valorMeta: 45000, valorEconomizado: 12300, prazo: isoAddDays(540), prioridade: "baixa", createdBy: "admin" },
+        { id: uid(), titulo: "Intercâmbio no Canadá", descricao: "Curso de inglês de 6 meses", categoria: "dep", emoji: "🍁", valorMeta: 35000, valorEconomizado: 6200, prazo: isoAddDays(700), prioridade: "alta", createdBy: "dep" },
+        { id: uid(), titulo: "Notebook novo", descricao: "Para os estudos e projetos", categoria: "dep", emoji: "💻", valorMeta: 4500, valorEconomizado: 1850, prazo: isoAddDays(180), prioridade: "media", createdBy: "dep" },
+        { id: uid(), titulo: "Reserva Financeira", descricao: "12 meses de despesas guardados", categoria: "familia", emoji: "🛡️", valorMeta: 90000, valorEconomizado: 26800, prazo: isoAddDays(720), prioridade: "alta", createdBy: "admin" },
       ],
       documents: [
-        { id: uid(), nome: "Apólice — Seguro Residencial 2026", categoria: "Seguros & Apólices", descricao: "Vigência até dez/2026", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "pai", data: isoAddDays(-40) },
-        { id: uid(), nome: "Contrato de financiamento — Casa", categoria: "Contratos", descricao: "Banco Violeta · 240 parcelas", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "mae", data: isoAddDays(-120) },
-        { id: uid(), nome: "CRLV — Carro da família", categoria: "Veículos", descricao: "Documento 2026 quitado", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "pai", data: isoAddDays(-15) },
+        { id: uid(), nome: "Apólice — Seguro Residencial 2026", categoria: "Seguros & Apólices", descricao: "Vigência até dez/2026", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-40) },
+        { id: uid(), nome: "Contrato de financiamento — Casa", categoria: "Contratos", descricao: "Banco Violeta · 240 parcelas", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-120) },
+        { id: uid(), nome: "CRLV — Carro da família", categoria: "Veículos", descricao: "Documento 2026 quitado", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-15) },
       ],
       invoices: [
-        { id: uid(), nome: "Fatura Violeta Black — junho", origem: "Cartão de crédito", valor: 2410.33, competencia: monthKey(isoAddDays(-30)), vencimento: isoAddDays(-20), status: "paga", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "pai", data: isoAddDays(-22) },
-        { id: uid(), nome: "Energia elétrica — mês atual", origem: "Energia", valor: 342.5, competencia: monthKey(todayISO()), vencimento: isoAddDays(3), status: "pendente", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "mae", data: isoAddDays(-2) },
+        { id: uid(), nome: "Fatura Violeta Black — junho", origem: "Cartão de crédito", valor: 2410.33, competencia: monthKey(isoAddDays(-30)), vencimento: isoAddDays(-20), status: "paga", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-22) },
+        { id: uid(), nome: "Energia elétrica — mês atual", origem: "Energia", valor: 342.5, competencia: monthKey(todayISO()), vencimento: isoAddDays(3), status: "pendente", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-2) },
       ],
       piggy: { saldo: 185, historico: [] },
       personalGoals: [
@@ -210,9 +208,7 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         state = JSON.parse(raw);
-        // migração de estados salvos por versões anteriores
-        if (!state.memberNames) state.memberNames = { pai: USERS.pai.name, mae: USERS.mae.name, filha: USERS.filha.name };
-        if (!state.customCategories) state.customCategories = [];
+        migrateState();
         return;
       }
     } catch (e) { /* estado corrompido — recomeça */ }
@@ -226,6 +222,31 @@
     } catch (e) {
       toast("⚠️ Armazenamento cheio — remova arquivos grandes para continuar salvando.");
     }
+  }
+
+  // migra estados salvos por versões anteriores (perfis pai/mãe/filha → admin/dependente)
+  function migrateState() {
+    const mapUser = (k) => (k === "pai" || k === "mae") ? "admin" : (k === "filha" ? "dep" : k);
+    if (!state.customCategories) state.customCategories = [];
+    if (state.currentUser) state.currentUser = mapUser(state.currentUser);
+    if (!state.memberNames || state.memberNames.pai !== undefined || state.memberNames.filha !== undefined) {
+      const old = state.memberNames || {};
+      state.memberNames = {
+        admin: old.admin || old.mae || old.pai || "Admin",
+        dep: old.dep || old.filha || "Dependente",
+      };
+    }
+    (state.transactions || []).forEach((t) => { t.owner = mapUser(t.owner); });
+    (state.accounts || []).forEach((a) => { a.owner = mapUser(a.owner); });
+    (state.cards || []).forEach((c) => { c.owner = mapUser(c.owner); });
+    (state.investments || []).forEach((i) => { i.owner = mapUser(i.owner); });
+    (state.documents || []).forEach((d) => { d.enviadoPor = mapUser(d.enviadoPor); });
+    (state.invoices || []).forEach((i) => { i.enviadoPor = mapUser(i.enviadoPor); });
+    (state.dreams || []).forEach((d) => {
+      d.createdBy = mapUser(d.createdBy);
+      if (d.categoria !== "familia") d.categoria = mapUser(d.categoria);
+    });
+    save();
   }
 
   /* ---------------- tags de status ---------------- */
@@ -591,7 +612,6 @@
       .sort((a, b) => (b.valorEconomizado / b.valorMeta) - (a.valorEconomizado / a.valorMeta))
       .slice(0, 3);
     $("#dashGoals").innerHTML = top.map(dreamCardHTML).join("");
-    bindDreamCardActions($("#dashGoals"));
   }
 
   /* ---------------- lançamentos ---------------- */
@@ -1026,24 +1046,36 @@
       </div>`;
   }
 
-  function bindDreamCardActions(root) {
-    $$("[data-edit-dream]", root).forEach((b) => b.addEventListener("click", () => openDreamModal(b.dataset.editDream)));
-    $$("[data-del-dream]", root).forEach((b) => b.addEventListener("click", () => {
-      const d = state.dreams.find((x) => x.id === b.dataset.delDream);
-      if (!canEditDream(d)) return;
-      if (!confirm(`Excluir o sonho "${d.titulo}"?`)) return;
-      state.dreams = state.dreams.filter((x) => x.id !== d.id);
-      save(); renderPage(currentPage); toast("Sonho removido do mural.");
-    }));
-    $$("[data-add-dream-money]", root).forEach((b) => b.addEventListener("click", () => {
-      const d = state.dreams.find((x) => x.id === b.dataset.addDreamMoney);
+  // ações dos cartões de sonho por delegação global — funciona em qualquer
+  // re-renderização (Vision Board, dashboard) sem depender de rebind por cartão
+  function handleDreamAction(e) {
+    const editBtn = e.target.closest("[data-edit-dream]");
+    if (editBtn) { openDreamModal(editBtn.dataset.editDream); return true; }
+
+    const delBtn = e.target.closest("[data-del-dream]");
+    if (delBtn) {
+      const d = state.dreams.find((x) => x.id === delBtn.dataset.delDream);
+      if (!d || !canEditDream(d)) return true;
+      if (confirm(`Excluir o sonho "${d.titulo}"?`)) {
+        state.dreams = state.dreams.filter((x) => x.id !== d.id);
+        save(); renderPage(currentPage); toast("Sonho removido do mural.");
+      }
+      return true;
+    }
+
+    const addBtn = e.target.closest("[data-add-dream-money]");
+    if (addBtn) {
+      const d = state.dreams.find((x) => x.id === addBtn.dataset.addDreamMoney);
+      if (!d) return true;
       const v = parseFloat((prompt(`Quanto adicionar em "${d.titulo}"? (R$)`) || "").replace(",", "."));
-      if (!v || v <= 0) return;
+      if (!v || v <= 0) return true;
       d.valorEconomizado = Math.min(d.valorEconomizado + v, d.valorMeta);
       save(); renderPage(currentPage);
       if (d.valorEconomizado >= d.valorMeta) toast(`🎉 Sonho "${d.titulo}" 100% alcançado! Parabéns!`);
       else toast(`💚 ${fmt(v)} adicionados ao sonho!`);
-    }));
+      return true;
+    }
+    return false;
   }
 
   function renderVisionBoard() {
@@ -1059,13 +1091,12 @@
     $("#dreamGrid").innerHTML = dreams.length
       ? dreams.map(dreamCardHTML).join("")
       : `<div class="empty-state" style="grid-column:1/-1"><span class="big">🌈</span>Nenhum sonho nesta categoria — crie o primeiro!</div>`;
-    bindDreamCardActions($("#dreamGrid"));
   }
 
   /* ---------------- área da filha ---------------- */
 
   function renderFilha() {
-    $("#filhaGreeting").textContent = `Oi, ${uname("filha")}! 🌟`;
+    $("#filhaGreeting").textContent = `Oi, ${uname("dep")}! 🌟`;
     $("#piggyValue").textContent = fmt(state.piggy.saldo);
 
     $("#personalGoals").innerHTML = state.personalGoals.length ? state.personalGoals.map((g) => {
@@ -1200,7 +1231,7 @@
       <div class="stat-card"><div class="label">Lançamentos</div><div class="value">${txs.length}</div></div>`;
 
     // por proprietário — relatórios individuais e consolidado
-    const owners = ["pai", "mae", "familia"];
+    const owners = ["admin", "familia"];
     $("#repOwner").innerHTML = `
       <table class="data">
         <thead><tr><th>Proprietário</th><th style="text-align:right">Receitas</th><th style="text-align:right">Despesas</th><th style="text-align:right">Saldo</th></tr></thead>
@@ -1297,9 +1328,8 @@
 
   function renderConfig() {
     $("#cfgFamilyName").value = state.familyName;
-    $("#cfgNamePai").value = uname("pai");
-    $("#cfgNameMae").value = uname("mae");
-    $("#cfgNameFilha").value = uname("filha");
+    $("#cfgNameAdmin").value = uname("admin");
+    $("#cfgNameDep").value = uname("dep");
 
     $("#cfgCatList").innerHTML = [
       ...CATEGORIES.map((c) => `<span class="filter-chip" style="cursor:default">${esc(c)}</span>`),
@@ -1345,6 +1375,7 @@
 
   function setDreamPhotoPreview(dataUrl) {
     const box = $("#dreamPhotoPreview");
+    if (!box) return;
     if (dataUrl) {
       $("#dreamPhotoImg").src = dataUrl;
       box.style.display = "flex";
@@ -1379,14 +1410,15 @@
     const form = $("#dreamForm");
     form.reset();
     pendingDreamPhoto = undefined;
-    $("#dreamPhotoInput").value = "";
+    const photoInput = $("#dreamPhotoInput");
+    if (photoInput) photoInput.value = "";
     setDreamPhotoPreview(null);
     $("#dreamModalTitle").textContent = dreamId ? "Editar sonho" : "Novo sonho";
 
     // filha só cria sonhos na própria categoria
     const catSel = $("#dreamCatSelect");
     if (!isAdmin()) {
-      catSel.value = "filha";
+      catSel.value = "dep";
       catSel.disabled = true;
     } else {
       catSel.disabled = false;
@@ -1451,8 +1483,9 @@
 
     $("#menuToggle").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
 
-    // navegação por botões "ver todos"
+    // navegação e ações delegadas (sobrevivem a qualquer re-renderização)
     document.addEventListener("click", (e) => {
+      if (handleDreamAction(e)) return;
       const g = e.target.closest("[data-goto]");
       if (g) goto(g.dataset.goto);
       const om = e.target.closest("[data-open-modal]");
@@ -1498,7 +1531,7 @@
       const data = {
         titulo: f.get("titulo").trim(),
         descricao: (f.get("descricao") || "").trim(),
-        categoria: isAdmin() ? f.get("categoria") : "filha",
+        categoria: isAdmin() ? f.get("categoria") : "dep",
         emoji: (f.get("emoji") || "").trim() || "🌟",
         valorMeta: parseFloat(f.get("valorMeta")),
         valorEconomizado: parseFloat(f.get("valorEconomizado")) || 0,
@@ -1579,9 +1612,8 @@
     $("#cfgSave").addEventListener("click", () => {
       state.familyName = $("#cfgFamilyName").value.trim() || state.familyName;
       state.memberNames = {
-        pai: $("#cfgNamePai").value.trim() || uname("pai"),
-        mae: $("#cfgNameMae").value.trim() || uname("mae"),
-        filha: $("#cfgNameFilha").value.trim() || uname("filha"),
+        admin: $("#cfgNameAdmin").value.trim() || uname("admin"),
+        dep: $("#cfgNameDep").value.trim() || uname("dep"),
       };
       save();
       renderShell();

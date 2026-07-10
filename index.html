@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=3">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💜</text></svg>">
 </head>
 <body>
@@ -142,7 +142,7 @@
             <p>Central de faturas da família — cartões, contas de consumo e boletos.</p>
           </div>
         </div>
-        <div class="shared-banner">👨‍👩‍👧 <span><strong>Área compartilhada:</strong> pai e mãe visualizam e gerenciam todas as faturas enviadas aqui.</span></div>
+        <div class="shared-banner">👨‍👩‍👧 <span><strong>Área compartilhada:</strong> os administradores visualizam e gerenciam todas as faturas enviadas aqui.</span></div>
         <div class="dropzone" id="invoiceDropzone">
           <span class="dz-icon">🧾</span>
           <strong>Arraste uma fatura aqui</strong> ou clique para selecionar
@@ -161,7 +161,7 @@
             <p>Cofre digital da família — contratos, apólices, comprovantes e documentos importantes.</p>
           </div>
         </div>
-        <div class="shared-banner">👨‍👩‍👧 <span><strong>Área compartilhada:</strong> todos os documentos ficam acessíveis para o pai e a mãe.</span></div>
+        <div class="shared-banner">👨‍👩‍👧 <span><strong>Área compartilhada:</strong> todos os documentos ficam acessíveis para os administradores.</span></div>
         <div class="dropzone" id="docDropzone">
           <span class="dz-icon">📂</span>
           <strong>Arraste documentos aqui</strong> ou clique para selecionar
@@ -327,16 +327,12 @@
                 <input id="cfgFamilyName" placeholder="Família Oliveira">
               </div>
               <div class="form-field">
-                <label>👨 Nome do pai</label>
-                <input id="cfgNamePai">
+                <label>👤 Nome do(a) administrador(a)</label>
+                <input id="cfgNameAdmin">
               </div>
               <div class="form-field">
-                <label>👩 Nome da mãe</label>
-                <input id="cfgNameMae">
-              </div>
-              <div class="form-field">
-                <label>👧 Nome da filha</label>
-                <input id="cfgNameFilha">
+                <label>🌟 Nome do(a) dependente</label>
+                <input id="cfgNameDep">
               </div>
             </div>
             <div class="modal-actions" style="justify-content:flex-start;">
@@ -376,7 +372,7 @@
         </div>
         <div class="form-field">
           <label>Proprietário</label>
-          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select>
+          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="admin">👤 Admin</option></select>
         </div>
         <div class="form-field full">
           <label>Descrição</label>
@@ -423,9 +419,8 @@
           <label>Categoria</label>
           <select name="categoria" id="dreamCatSelect">
             <option value="familia">🏠 Família</option>
-            <option value="pai">👨 Pai</option>
-            <option value="mae">👩 Mãe</option>
-            <option value="filha">👧 Filha</option>
+            <option value="admin">👤 Admin</option>
+            <option value="dep">🌟 Dependente</option>
           </select>
         </div>
         <div class="form-field">
@@ -512,6 +507,6 @@
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>
