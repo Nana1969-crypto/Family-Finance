@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Finance — Gestão Financeira Familiar</title>
+  <meta name="description" content="Plataforma premium de gestão financeira familiar: planejamento, organização, educação financeira e realização de sonhos.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💜</text></svg>">
+</head>
+<body>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="brand-mark">💎</div>
+      <h1>Family <span class="accent">Finance</span></h1>
+      <p class="login-sub">Planejamento, organização e sonhos — juntos, em família.</p>
+      <div class="profile-list" id="profileList"></div>
+      <p class="login-note">🔒 Ambiente protegido · cada perfil vê apenas o que lhe pertence</p>
+    </div>
+  </div>
+
+  <!-- ===================== APP ===================== -->
+  <div class="app-shell" id="appShell">
+
+    <div class="mobile-topbar">
+      <button class="icon-btn" id="menuToggle" style="flex:0 0 auto; padding:8px 12px;">☰</button>
+      <strong id="mobileTitle">Family Finance</strong>
+      <span></span>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="mini-mark">💎</div>
+        <span>Family Finance</span>
+      </div>
+      <nav id="navContainer"></nav>
+      <div class="sidebar-footer">
+        <div class="user-chip" id="userChip"></div>
+        <div class="sidebar-actions">
+          <button class="icon-btn" id="themeToggle" title="Alternar tema">🌙 Tema</button>
+          <button class="icon-btn" id="logoutBtn" title="Trocar de perfil">↩ Sair</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main" id="mainContent">
+
+      <!-- Dashboard (pais) -->
+      <section class="page" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <h2 id="dashGreeting">Bom dia 👋</h2>
+            <p>Visão consolidada das finanças da família.</p>
+          </div>
+          <button class="btn btn-primary" data-open-modal="tx">+ Novo lançamento</button>
+        </div>
+        <div class="stat-grid" id="dashStats"></div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-title">
+              <h3>Fluxo de caixa — últimos 6 meses</h3>
+              <span class="hint">R$ mil</span>
+            </div>
+            <div class="chart-wrap" id="cashflowChart"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>Despesas por categoria</h3><span class="hint">mês atual</span></div>
+            <div id="categoryDonut"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-title">
+              <h3>Próximos vencimentos</h3>
+              <button class="btn btn-ghost btn-sm" data-goto="lancamentos">Ver todos</button>
+            </div>
+            <div class="table-wrap" id="dueSoonList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>✨ Assistente inteligente</h3></div>
+            <div id="aiInsights"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">
+            <h3>Metas em andamento</h3>
+            <button class="btn btn-ghost btn-sm" data-goto="visionboard">Vision Board</button>
+          </div>
+          <div class="vb-grid" id="dashGoals"></div>
+        </div>
+      </section>
+
+      <!-- Lançamentos -->
+      <section class="page" id="page-lancamentos">
+        <div class="page-header">
+          <div>
+            <h2>Lançamentos</h2>
+            <p>Receitas e despesas de toda a família, com identificação por proprietário.</p>
+          </div>
+          <button class="btn btn-primary" data-open-modal="tx">+ Novo lançamento</button>
+        </div>
+        <div class="filter-row" id="tagFilters"></div>
+        <div class="panel">
+          <div class="table-wrap" id="txTable"></div>
+        </div>
+      </section>
+
+      <!-- Contas & Cartões -->
+      <section class="page" id="page-contas">
+        <div class="page-header">
+          <div>
+            <h2>Contas & Cartões</h2>
+            <p>Saldos bancários e controle completo dos cartões da família.</p>
+          </div>
+        </div>
+        <div class="grid-2-even">
+          <div class="panel">
+            <div class="panel-title"><h3>🏦 Contas bancárias</h3></div>
+            <div id="accountsList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>💳 Cartões de crédito</h3></div>
+            <div id="cardsList"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><h3>📈 Investimentos</h3></div>
+          <div class="table-wrap" id="investList"></div>
+        </div>
+      </section>
+
+      <!-- Faturas -->
+      <section class="page" id="page-faturas">
+        <div class="page-header">
+          <div>
+            <h2>Faturas</h2>
+            <p>Central de faturas da família — cartões, contas de consumo e boletos.</p>
+          </div>
+        </div>
+        <div class="shared-banner">👨‍👩‍👧 <span><strong>Área compartilhada:</strong> pai e mãe visualizam e gerenciam todas as faturas enviadas aqui.</span></div>
+        <div class="dropzone" id="invoiceDropzone">
+          <span class="dz-icon">🧾</span>
+          <strong>Arraste uma fatura aqui</strong> ou clique para selecionar
+          <span class="dz-hint">PDF, JPG ou PNG · até 2 MB por arquivo</span>
+          <input type="file" id="invoiceFileInput" accept=".pdf,.jpg,.jpeg,.png,.webp" hidden multiple>
+        </div>
+        <div class="filter-row" id="invoiceFilters"></div>
+        <div class="doc-grid" id="invoiceGrid"></div>
+      </section>
+
+      <!-- Documentos -->
+      <section class="page" id="page-documentos">
+        <div class="page-header">
+          <div>
+            <h2>Documentos</h2>
+            <p>Cofre digital da família — contratos, apólices, comprovantes e documentos importantes.</p>
+          </div>
+        </div>
+        <div class="shared-banner">👨‍👩‍👧 <span><strong>Área compartilhada:</strong> todos os documentos ficam acessíveis para o pai e a mãe.</span></div>
+        <div class="dropzone" id="docDropzone">
+          <span class="dz-icon">📂</span>
+          <strong>Arraste documentos aqui</strong> ou clique para selecionar
+          <span class="dz-hint">PDF, imagens ou documentos · até 2 MB por arquivo</span>
+          <input type="file" id="docFileInput" hidden multiple>
+        </div>
+        <div class="filter-row" id="docFilters"></div>
+        <div class="doc-grid" id="docGrid"></div>
+      </section>
+
+      <!-- Calendário -->
+      <section class="page" id="page-calendario">
+        <div class="page-header">
+          <div>
+            <h2>Calendário financeiro</h2>
+            <p>Vencimentos, recebimentos e compromissos — com as cores das tags.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="cal-header">
+            <h3 id="calTitle"></h3>
+            <div class="cal-nav">
+              <button class="icon-btn" id="calPrev" style="flex:0 0 auto; padding:7px 13px;">←</button>
+              <button class="icon-btn" id="calToday" style="flex:0 0 auto; padding:7px 13px;">Hoje</button>
+              <button class="icon-btn" id="calNext" style="flex:0 0 auto; padding:7px 13px;">→</button>
+            </div>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="chart-legend" style="margin-top:14px;" id="calLegend"></div>
+        </div>
+      </section>
+
+      <!-- Vision Board -->
+      <section class="page" id="page-visionboard">
+        <div class="vb-header">
+          <span class="house">🏡</span>
+          <h2 id="vbFamilyName">Família Oliveira</h2>
+          <p>Nosso mural de sonhos — construído por todos, realizado juntos.</p>
+        </div>
+        <div class="page-header">
+          <div class="filter-row" id="dreamFilters" style="margin:0;"></div>
+          <button class="btn btn-green" data-open-modal="dream">+ Novo sonho</button>
+        </div>
+        <div class="vb-grid" id="dreamGrid"></div>
+        <p class="vb-quote">“Grandes conquistas começam com <strong>pequenos passos</strong>.”</p>
+      </section>
+
+      <!-- Painel da filha -->
+      <section class="page" id="page-painel-filha">
+        <div class="page-header">
+          <div>
+            <h2 id="filhaGreeting">Oi! 🌟</h2>
+            <p>Seu espaço para aprender, poupar e conquistar seus sonhos.</p>
+          </div>
+        </div>
+        <div class="grid-2-even">
+          <div class="piggy-card">
+            <div class="label" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-3);">🐷 Meu cofrinho</div>
+            <div class="value" id="piggyValue">R$ 0,00</div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-green btn-sm" id="piggyDeposit">+ Guardar dinheiro</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>🎯 Minhas metas</h3><button class="btn btn-ghost btn-sm" id="addPersonalGoal">+ Meta</button></div>
+            <div id="personalGoals"></div>
+          </div>
+        </div>
+        <div class="grid-2-even">
+          <div class="panel">
+            <div class="panel-title"><h3>🚀 Missões da semana</h3></div>
+            <div id="missionList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>🏅 Minhas conquistas</h3></div>
+            <div class="badge-row" id="badgeRow"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Educação financeira -->
+      <section class="page" id="page-educacao">
+        <div class="page-header">
+          <div>
+            <h2>Educação financeira</h2>
+            <p>Aprenda brincando: quiz, simulador e conteúdos para o seu futuro.</p>
+          </div>
+        </div>
+        <div class="grid-2-even">
+          <div class="panel">
+            <div class="panel-title"><h3>🧠 Quiz do dinheiro</h3></div>
+            <div id="quizBox"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title"><h3>🧮 Simulador de poupança</h3></div>
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Quanto vou guardar por mês (R$)</label>
+                <input type="number" id="simMonthly" value="50" min="1">
+              </div>
+              <div class="form-field">
+                <label>Por quantos meses</label>
+                <input type="number" id="simMonths" value="12" min="1">
+              </div>
+            </div>
+            <div class="stat-card" style="margin-top:14px;">
+              <div class="label">Você teria guardado</div>
+              <div class="value green" id="simResult">R$ 600,00</div>
+              <div class="delta" id="simHint"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><h3>📚 Aprenda mais</h3></div>
+          <div id="articleList"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===================== MODAIS ===================== -->
+
+  <!-- Novo lançamento -->
+  <div class="modal-overlay" id="modal-tx">
+    <div class="modal">
+      <h3 id="txModalTitle">Novo lançamento</h3>
+      <form id="txForm" class="form-grid">
+        <div class="form-field">
+          <label>Tipo</label>
+          <select name="type"><option value="despesa">Despesa</option><option value="receita">Receita</option></select>
+        </div>
+        <div class="form-field">
+          <label>Proprietário</label>
+          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select>
+        </div>
+        <div class="form-field full">
+          <label>Descrição</label>
+          <input name="desc" required placeholder="Ex.: Supermercado, Salário, Escola...">
+        </div>
+        <div class="form-field">
+          <label>Valor (R$)</label>
+          <input name="valor" type="number" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-field">
+          <label>Vencimento / data</label>
+          <input name="vencimento" type="date" required>
+        </div>
+        <div class="form-field">
+          <label>Categoria</label>
+          <select name="categoria" id="txCategorySelect"></select>
+        </div>
+        <div class="form-field">
+          <label>Recorrente?</label>
+          <select name="recorrente"><option value="nao">Não</option><option value="sim">Sim (mensal)</option></select>
+        </div>
+        <div class="modal-actions form-field full">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Novo sonho -->
+  <div class="modal-overlay" id="modal-dream">
+    <div class="modal">
+      <h3 id="dreamModalTitle">Novo sonho</h3>
+      <form id="dreamForm" class="form-grid">
+        <div class="form-field full">
+          <label>Título do sonho</label>
+          <input name="titulo" required placeholder="Ex.: Viagem para a Disney">
+        </div>
+        <div class="form-field full">
+          <label>Descrição</label>
+          <input name="descricao" placeholder="Por que esse sonho é importante?">
+        </div>
+        <div class="form-field">
+          <label>Categoria</label>
+          <select name="categoria" id="dreamCatSelect">
+            <option value="familia">🏠 Família</option>
+            <option value="pai">👨 Pai</option>
+            <option value="mae">👩 Mãe</option>
+            <option value="filha">👧 Filha</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Emoji do sonho</label>
+          <input name="emoji" placeholder="✈️" maxlength="4">
+        </div>
+        <div class="form-field">
+          <label>Valor da meta (R$)</label>
+          <input name="valorMeta" type="number" step="0.01" min="1" required>
+        </div>
+        <div class="form-field">
+          <label>Já economizado (R$)</label>
+          <input name="valorEconomizado" type="number" step="0.01" min="0" value="0">
+        </div>
+        <div class="form-field">
+          <label>Prazo</label>
+          <input name="prazo" type="date">
+        </div>
+        <div class="form-field">
+          <label>Prioridade</label>
+          <select name="prioridade"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
+        </div>
+        <div class="modal-actions form-field full">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-green">Salvar sonho</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detalhes do upload de documento -->
+  <div class="modal-overlay" id="modal-docmeta">
+    <div class="modal">
+      <h3 id="docMetaTitle">Enviar documento</h3>
+      <form id="docMetaForm" class="form-grid">
+        <div class="form-field full">
+          <label>Arquivo</label>
+          <input id="docMetaFile" disabled>
+        </div>
+        <div class="form-field full">
+          <label>Nome do documento</label>
+          <input name="nome" required>
+        </div>
+        <div class="form-field full" id="docMetaCatField">
+          <label>Categoria</label>
+          <select name="categoria" id="docMetaCat"></select>
+        </div>
+        <div class="form-field" id="invMetaOrigem" style="display:none;">
+          <label>Origem</label>
+          <select name="origem"></select>
+        </div>
+        <div class="form-field" id="invMetaValor" style="display:none;">
+          <label>Valor (R$)</label>
+          <input name="valor" type="number" step="0.01" min="0">
+        </div>
+        <div class="form-field" id="invMetaComp" style="display:none;">
+          <label>Competência</label>
+          <input name="competencia" type="month">
+        </div>
+        <div class="form-field" id="invMetaVenc" style="display:none;">
+          <label>Vencimento</label>
+          <input name="vencimento" type="date">
+        </div>
+        <div class="form-field full">
+          <label>Observações (opcional)</label>
+          <input name="descricao" placeholder="Ex.: renovação anual, 2ª via...">
+        </div>
+        <div class="modal-actions form-field full">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="chart-tooltip" id="chartTooltip"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
