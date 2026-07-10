@@ -282,6 +282,7 @@
       { section: "Visão geral" },
       { page: "dashboard", ico: "📊", label: "Dashboard" },
       { page: "lancamentos", ico: "💸", label: "Lançamentos" },
+      { page: "importar", ico: "📥", label: "Importar extrato" },
       { page: "contas", ico: "🏦", label: "Contas & Cartões" },
       { section: "Arquivos da família" },
       { page: "faturas", ico: "🧾", label: "Faturas" },
@@ -373,6 +374,7 @@
       educacao: renderEducacao,
       relatorios: renderReports,
       config: renderConfig,
+      importar: renderImportPreview,
     };
     (renders[page] || (() => {}))();
   }
@@ -1200,6 +1202,220 @@
     $("#simHint").textContent = months > 0 ? `Rendendo ~0,7% ao mês, viraria ${fmt(comJuros)} 🌱` : "";
   }
 
+  /* ---------------- importar extrato (CSV / OFX) ---------------- */
+
+  let importRows = [];
+
+  const CATEGORY_RULES = [
+    [/superm|mercado|carrefour|assai|atacad|padaria|acougue|hortifruti|ifood|restaur|lanch|pizza|burger|cafe/i, "Alimentação"],
+    [/uber|99app|99\*|taxi|posto|combust|gasolina|estacion|pedagio|metro|onibus|localiza/i, "Transporte"],
+    [/farmac|drogar|hospital|clinic|laborat|dentist|unimed|amil|hapvida|plano de saude/i, "Saúde"],
+    [/netflix|spotify|prime|disney|hbo|globoplay|youtube|assinatura|apple\.com|google (one|play)|icloud/i, "Assinaturas"],
+    [/energia|enel|light |cemig|copel|celpe|agua|saneamento|sabesp|condominio|aluguel|comgas|internet|fibra|vivo|claro|tim |telefone/i, "Moradia"],
+    [/escola|colegio|faculdade|universidade|curso|mensalidade escolar/i, "Educação"],
+    [/cinema|show|ingresso|teatro|viagem|hotel|airbnb|passagem|parque/i, "Lazer"],
+    [/seguro/i, "Seguros"],
+    [/ipva|iptu|darf|das |imposto|tributo|taxa gov/i, "Impostos"],
+    [/salario|pagamento recebido|pix recebido|ted recebida|deposito|rendimento|provento|comissao/i, "Salário"],
+  ];
+
+  function suggestCategory(desc, tipo) {
+    for (const [re, cat] of CATEGORY_RULES) if (re.test(desc)) return cat;
+    return tipo === "receita" ? "Salário" : "Outros";
+  }
+
+  // valores em formato brasileiro (1.234,56) ou internacional (1,234.56)
+  function parseMoney(raw) {
+    if (typeof raw !== "string") return NaN;
+    let t = raw.trim().replace(/R\$\s?/i, "").replace(/\s/g, "");
+    let neg = false;
+    if (/^\(.*\)$/.test(t)) { neg = true; t = t.slice(1, -1); }
+    if (t.startsWith("-")) { neg = true; t = t.slice(1); }
+    if (t.startsWith("+")) t = t.slice(1);
+    if (!/^\d[\d.,]*$/.test(t) || !/\d/.test(t)) return NaN;
+    const lc = t.lastIndexOf(","), ld = t.lastIndexOf(".");
+    if (lc > ld) t = t.replace(/\./g, "").replace(",", ".");
+    else t = t.replace(/,/g, "");
+    const v = parseFloat(t);
+    return neg ? -v : v;
+  }
+
+  function parseDateAny(raw) {
+    const t = (raw || "").trim().replace(/"/g, "");
+    let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = t.match(/^(\d{2})[\/.\-](\d{2})[\/.\-](\d{2,4})$/);
+    if (m) {
+      const y = m[3].length === 2 ? `20${m[3]}` : m[3];
+      return `${y}-${m[2]}-${m[1]}`;
+    }
+    return null;
+  }
+
+  function splitCsvLine(line, sep) {
+    const out = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ;
+      } else if (ch === sep && !inQ) { out.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map((f) => f.trim());
+  }
+
+  function parseCsvExtrato(text) {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (!lines.length) return [];
+    // detecta separador dominante
+    const sample = lines.slice(0, 8).join("\n");
+    const counts = { ";": (sample.match(/;/g) || []).length, ",": (sample.match(/,/g) || []).length, "\t": (sample.match(/\t/g) || []).length };
+    const sep = counts[";"] >= counts[","] && counts[";"] >= counts["\t"] ? ";" : (counts["\t"] > counts[","] ? "\t" : ",");
+
+    const rows = [];
+    for (const line of lines) {
+      const fields = splitCsvLine(line, sep);
+      const dateIdx = fields.findIndex((f) => parseDateAny(f));
+      if (dateIdx === -1) continue; // cabeçalho ou linha de saldo
+      const data = parseDateAny(fields[dateIdx]);
+
+      // candidatos a valor: preferir campos com centavos (,dd ou .dd) — evita nº de documento
+      const moneyIdx = [];
+      fields.forEach((f, i) => {
+        if (i === dateIdx) return;
+        const v = parseMoney(f);
+        if (!isNaN(v) && v !== 0) moneyIdx.push({ i, v, cents: /[.,]\d{2}$/.test(f.trim().replace(/["()]/g, "")) });
+      });
+      if (!moneyIdx.length) continue;
+      const withCents = moneyIdx.filter((c) => c.cents);
+      const chosen = (withCents.length ? withCents : moneyIdx)[0];
+
+      // descrição: o campo de texto mais longo que não é data nem o valor
+      const desc = fields
+        .filter((f, i) => i !== dateIdx && i !== chosen.i && f && !parseDateAny(f) && isNaN(parseMoney(f)))
+        .sort((a, b) => b.length - a.length)[0] || "Lançamento importado";
+
+      rows.push({ data, desc: desc.replace(/\s+/g, " ").trim(), valor: Math.abs(chosen.v), tipo: chosen.v < 0 ? "despesa" : "receita" });
+    }
+    return rows;
+  }
+
+  function parseOfxExtrato(text) {
+    const rows = [];
+    const blocks = text.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi) || [];
+    for (const b of blocks) {
+      const get = (tag) => {
+        const m = b.match(new RegExp(`<${tag}>([^<\r\n]+)`, "i"));
+        return m ? m[1].trim() : "";
+      };
+      const dt = get("DTPOSTED").match(/^(\d{4})(\d{2})(\d{2})/);
+      const amt = parseFloat(get("TRNAMT").replace(",", "."));
+      if (!dt || isNaN(amt) || amt === 0) continue;
+      rows.push({
+        data: `${dt[1]}-${dt[2]}-${dt[3]}`,
+        desc: (get("MEMO") || get("NAME") || "Lançamento importado").replace(/\s+/g, " "),
+        valor: Math.abs(amt),
+        tipo: amt < 0 ? "despesa" : "receita",
+      });
+    }
+    return rows;
+  }
+
+  function isDuplicateTx(row) {
+    return state.transactions.some((t) =>
+      t.vencimento === row.data &&
+      Math.abs(t.valor - row.valor) < 0.005 &&
+      t.desc.trim().toLowerCase() === row.desc.trim().toLowerCase());
+  }
+
+  async function handleExtratoFile(file) {
+    // extratos brasileiros costumam vir em Latin-1; tenta UTF-8 e recua se necessário
+    const buf = await file.arrayBuffer();
+    let text;
+    try { text = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+    catch { text = new TextDecoder("iso-8859-1").decode(buf); }
+
+    const isOfx = /\.ofx$/i.test(file.name) || /<OFX/i.test(text);
+    const parsed = isOfx ? parseOfxExtrato(text) : parseCsvExtrato(text);
+    if (!parsed.length) {
+      toast("⚠️ Não encontrei lançamentos nesse arquivo. Exporte o extrato em CSV ou OFX no app do banco.");
+      return;
+    }
+    importRows = parsed.map((r) => {
+      const dup = isDuplicateTx(r);
+      return { ...r, categoria: suggestCategory(r.desc, r.tipo), dup, checked: !dup };
+    });
+    renderImportPreview();
+    toast(`📥 ${parsed.length} lançamentos encontrados — confira e confirme.`);
+  }
+
+  function renderImportPreview() {
+    const panel = $("#importPreview");
+    if (!importRows.length) { panel.style.display = "none"; return; }
+    panel.style.display = "";
+
+    const selected = importRows.filter((r) => r.checked);
+    const totR = selected.filter((r) => r.tipo === "receita").reduce((s, r) => s + r.valor, 0);
+    const totD = selected.filter((r) => r.tipo === "despesa").reduce((s, r) => s + r.valor, 0);
+    $("#importSummary").textContent =
+      `${selected.length} de ${importRows.length} selecionados · receitas ${fmt(totR)} · despesas ${fmt(totD)}`;
+
+    $("#importTable").innerHTML = `
+      <table class="data">
+        <thead><tr><th></th><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th></tr></thead>
+        <tbody>${importRows.map((r, i) => `
+          <tr style="${r.dup ? "opacity:.55" : ""}">
+            <td><input type="checkbox" data-imp-check="${i}" ${r.checked ? "checked" : ""}></td>
+            <td style="white-space:nowrap">${fmtDate(r.data)}</td>
+            <td>${esc(r.desc)}${r.dup ? ` <span class="tag tag-semana" style="margin-left:6px"><span class="dot"></span>já existe</span>` : ""}</td>
+            <td>
+              <select data-imp-cat="${i}" style="padding:5px 8px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-1);">
+                ${allCategories().map((c) => `<option ${c === r.categoria ? "selected" : ""}>${esc(c)}</option>`).join("")}
+              </select>
+            </td>
+            <td>
+              <select data-imp-tipo="${i}" style="padding:5px 8px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-1);">
+                <option value="despesa" ${r.tipo === "despesa" ? "selected" : ""}>Despesa</option>
+                <option value="receita" ${r.tipo === "receita" ? "selected" : ""}>Receita</option>
+              </select>
+            </td>
+            <td style="text-align:right"><span class="money ${r.tipo === "receita" ? "pos" : "neg"}">${r.tipo === "receita" ? "+" : "−"} ${fmt(r.valor)}</span></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+
+    $$("[data-imp-check]", $("#importTable")).forEach((el) => el.addEventListener("change", () => {
+      importRows[+el.dataset.impCheck].checked = el.checked;
+      renderImportPreview();
+    }));
+    $$("[data-imp-cat]", $("#importTable")).forEach((el) => el.addEventListener("change", () => {
+      importRows[+el.dataset.impCat].categoria = el.value;
+    }));
+    $$("[data-imp-tipo]", $("#importTable")).forEach((el) => el.addEventListener("change", () => {
+      importRows[+el.dataset.impTipo].tipo = el.value;
+      renderImportPreview();
+    }));
+  }
+
+  function confirmImport() {
+    const selected = importRows.filter((r) => r.checked);
+    if (!selected.length) { toast("Selecione ao menos um lançamento."); return; }
+    const owner = $("#importOwner").value;
+    for (const r of selected) {
+      state.transactions.push({
+        id: uid(), type: r.tipo, desc: r.desc, valor: r.valor, categoria: r.categoria,
+        owner, vencimento: r.data, pago: true, recorrente: false, importado: true,
+      });
+    }
+    importRows = [];
+    save();
+    renderImportPreview();
+    toast(`✅ ${selected.length} lançamentos importados do extrato!`);
+    goto("lancamentos");
+  }
+
   /* ---------------- relatórios ---------------- */
 
   let repMonthKey = monthKey(todayISO());
@@ -1640,6 +1856,16 @@
     // dropzones (documentos + faturas)
     setupDropzone("#docDropzone", "#docFileInput", "doc");
     setupDropzone("#invoiceDropzone", "#invoiceFileInput", "invoice");
+
+    // importar extrato
+    const impZone = $("#importDropzone"), impInput = $("#importFileInput");
+    impZone.addEventListener("click", () => impInput.click());
+    impInput.addEventListener("change", () => { if (impInput.files[0]) handleExtratoFile(impInput.files[0]); impInput.value = ""; });
+    ["dragover", "dragenter"].forEach((ev) => impZone.addEventListener(ev, (e) => { e.preventDefault(); impZone.classList.add("dragover"); }));
+    ["dragleave", "drop"].forEach((ev) => impZone.addEventListener(ev, (e) => { e.preventDefault(); impZone.classList.remove("dragover"); }));
+    impZone.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) handleExtratoFile(e.dataTransfer.files[0]); });
+    $("#importConfirm").addEventListener("click", confirmImport);
+    $("#importCancel").addEventListener("click", () => { importRows = []; renderImportPreview(); });
   }
 
   /* ---------------- init ---------------- */

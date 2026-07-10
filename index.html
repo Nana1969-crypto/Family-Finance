@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=3">
+  <link rel="stylesheet" href="css/styles.css?v=4">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💜</text></svg>">
 </head>
 <body>
@@ -107,6 +107,43 @@
         <div class="filter-row" id="tagFilters"></div>
         <div class="panel">
           <div class="table-wrap" id="txTable"></div>
+        </div>
+      </section>
+
+      <!-- Importar extrato -->
+      <section class="page" id="page-importar">
+        <div class="page-header">
+          <div>
+            <h2>Importar extrato</h2>
+            <p>Baixe o extrato em CSV ou OFX no app do seu banco e solte aqui — o Family Finance organiza tudo nos lançamentos.</p>
+          </div>
+        </div>
+        <div class="shared-banner">🔒 <span><strong>Privacidade total:</strong> o arquivo é lido dentro do seu navegador e não é enviado a nenhum servidor — nem ao seu banco.</span></div>
+        <div class="dropzone" id="importDropzone">
+          <span class="dz-icon">📥</span>
+          <strong>Arraste o extrato aqui</strong> ou clique para selecionar
+          <span class="dz-hint">CSV ou OFX exportado do seu banco (Nubank, Itaú, BB, Bradesco, Inter...)</span>
+          <input type="file" id="importFileInput" accept=".csv,.ofx,.txt" hidden>
+        </div>
+        <div class="panel" id="importPreview" style="display:none;">
+          <div class="panel-title">
+            <h3>Confira antes de importar</h3>
+            <span class="hint" id="importSummary"></span>
+          </div>
+          <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); margin-bottom:12px;">
+            <div class="form-field">
+              <label>Proprietário dos lançamentos</label>
+              <select id="importOwner">
+                <option value="familia">👨‍👩‍👧 Família</option>
+                <option value="admin">👤 Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap" id="importTable"></div>
+          <div class="modal-actions" style="justify-content:space-between;">
+            <button class="btn btn-ghost" id="importCancel">Cancelar</button>
+            <button class="btn btn-green" id="importConfirm">✓ Importar selecionados</button>
+          </div>
         </div>
       </section>
 
@@ -507,6 +544,6 @@
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>
