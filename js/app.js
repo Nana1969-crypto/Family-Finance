@@ -24,7 +24,7 @@
     "Escola", "Condomínio", "Plano de saúde", "Outros",
   ];
 
-  const OWNER_LABEL = { admin: "👤 Admin", familia: "👨‍👩‍👧 Família" };
+  const OWNER_LABEL = { pai: "👨 Pai", mae: "👩 Mãe", familia: "👨‍👩‍👧 Família" };
 
   const TAGS = {
     vencida:    { label: "Vencida",       cls: "tag-vencida",    color: "var(--tag-red)" },
@@ -37,13 +37,15 @@
 
   const DREAM_CATS = {
     familia: { label: "🏠 Família", grad: "linear-gradient(135deg, rgba(124,58,237,.35), rgba(34,197,94,.25))" },
-    admin:   { label: "👤 Admin",   grad: "linear-gradient(135deg, rgba(139,92,246,.4), rgba(63,140,243,.25))" },
+    pai:     { label: "👨 Pai",     grad: "linear-gradient(135deg, rgba(139,92,246,.4), rgba(63,140,243,.25))" },
+    mae:     { label: "👩 Mãe",     grad: "linear-gradient(135deg, rgba(224,85,158,.35), rgba(139,92,246,.25))" },
     dep:     { label: "🌟 Dependente", grad: "linear-gradient(135deg, rgba(34,197,94,.35), rgba(250,204,21,.2))" },
   };
 
   const USERS = {
-    admin: { name: "Admin", role: "Acesso completo às finanças da família", type: "admin", avatar: "👤", cls: "pai" },
-    dep:   { name: "Dependente", role: "Educação financeira, sonhos e missões", type: "dep", avatar: "🌟", cls: "filha" },
+    pai: { name: "Roberto", role: "Administrador · acesso completo", type: "admin", avatar: "👨", cls: "pai" },
+    mae: { name: "Adriana", role: "Administradora · acesso completo", type: "admin", avatar: "👩", cls: "mae" },
+    dep: { name: "Sofia", role: "Educação financeira, sonhos e missões", type: "dep", avatar: "🌟", cls: "filha" },
   };
 
   // nome exibido — personalizável em Configurações
@@ -114,8 +116,8 @@
       const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-08`;
       const v = 1 + ((off * 7) % 5 - 2) * 0.04; // variação determinística ±8%
       txs.push(
-        { id: uid(), type: "receita", desc: "Comissões de seguros", valor: Math.round(8600 * v), categoria: "Salário", owner: "admin", vencimento: iso, pago: true, recorrente: true },
-        { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: Math.round(9900 * (2 - v)), categoria: "Salário", owner: "admin", vencimento: iso, pago: true, recorrente: true },
+        { id: uid(), type: "receita", desc: "Comissões de seguros", valor: Math.round(8600 * v), categoria: "Salário", owner: "pai", vencimento: iso, pago: true, recorrente: true },
+        { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: Math.round(9900 * (2 - v)), categoria: "Salário", owner: "mae", vencimento: iso, pago: true, recorrente: true },
         { id: uid(), type: "despesa", desc: "Financiamento da casa", valor: 3200, categoria: "Moradia", owner: "familia", vencimento: iso, pago: true, recorrente: true },
         { id: uid(), type: "despesa", desc: "Supermercado", valor: Math.round(1750 * v), categoria: "Alimentação", owner: "familia", vencimento: iso, pago: true },
         { id: uid(), type: "despesa", desc: "Escola do(a) dependente", valor: 1650, categoria: "Educação", owner: "familia", vencimento: iso, pago: true, recorrente: true },
@@ -129,58 +131,59 @@
     // Mês atual — mistura de pagos e pendentes para exercitar as tags
     const thisMonth8 = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-05`;
     txs.push(
-      { id: uid(), type: "receita", desc: "Comissões de seguros", valor: 8900, categoria: "Salário", owner: "admin", vencimento: thisMonth8, pago: true, recorrente: true },
-      { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: 10200, categoria: "Salário", owner: "admin", vencimento: thisMonth8, pago: true, recorrente: true },
+      { id: uid(), type: "receita", desc: "Comissões de seguros", valor: 8900, categoria: "Salário", owner: "pai", vencimento: thisMonth8, pago: true, recorrente: true },
+      { id: uid(), type: "receita", desc: "Receita da agência de marketing", valor: 10200, categoria: "Salário", owner: "mae", vencimento: thisMonth8, pago: true, recorrente: true },
       { id: uid(), type: "despesa", desc: "Financiamento da casa", valor: 3200, categoria: "Moradia", owner: "familia", vencimento: thisMonth8, pago: true, recorrente: true },
       { id: uid(), type: "despesa", desc: "Escola do(a) dependente", valor: 1650, categoria: "Educação", owner: "familia", vencimento: thisMonth8, pago: true, recorrente: true },
       { id: uid(), type: "despesa", desc: "Supermercado", valor: 1920, categoria: "Alimentação", owner: "familia", vencimento: isoAddDays(-6), pago: true },
-      { id: uid(), type: "despesa", desc: "IPVA — parcela 4/6", valor: 480, categoria: "Impostos", owner: "admin", vencimento: isoAddDays(-3), pago: false },
+      { id: uid(), type: "despesa", desc: "IPVA — parcela 4/6", valor: 480, categoria: "Impostos", owner: "pai", vencimento: isoAddDays(-3), pago: false },
       { id: uid(), type: "despesa", desc: "Internet fibra", valor: 129.9, categoria: "Assinaturas", owner: "familia", vencimento: isoAddDays(0), pago: false, recorrente: true },
       { id: uid(), type: "despesa", desc: "Conta de energia", valor: 342.5, categoria: "Moradia", owner: "familia", vencimento: isoAddDays(3), pago: false },
       { id: uid(), type: "despesa", desc: "Streaming e assinaturas", valor: 190, categoria: "Assinaturas", owner: "familia", vencimento: isoAddDays(5), pago: false, recorrente: true },
       { id: uid(), type: "despesa", desc: "Fatura cartão Violeta Black", valor: 2680, categoria: "Outros", owner: "familia", vencimento: isoAddDays(12), pago: false },
-      { id: uid(), type: "despesa", desc: "Seguro do carro", valor: 310, categoria: "Seguros", owner: "admin", vencimento: isoAddDays(9), pago: false, recorrente: true },
+      { id: uid(), type: "despesa", desc: "Seguro do carro", valor: 310, categoria: "Seguros", owner: "pai", vencimento: isoAddDays(9), pago: false, recorrente: true },
       { id: uid(), type: "despesa", desc: "Aporte — Viagem Internacional", valor: 800, categoria: "Outros", owner: "familia", vencimento: isoAddDays(15), pago: false, metaLink: true },
     );
 
     return {
       familyName: "Família Oliveira",
-      memberNames: { admin: "Adriana", dep: "Sofia" },
+      memberNames: { pai: "Roberto", mae: "Adriana", dep: "Sofia" },
+      auth: {},
       customCategories: [],
       theme: "dark",
       currentUser: null,
       transactions: txs,
       accounts: [
-        { id: uid(), banco: "Banco Violeta", tipo: "Conta corrente", owner: "admin", saldo: 6420.8 },
-        { id: uid(), banco: "Banco Esmeralda", tipo: "Conta corrente", owner: "admin", saldo: 8130.45 },
+        { id: uid(), banco: "Banco Violeta", tipo: "Conta corrente", owner: "pai", saldo: 6420.8 },
+        { id: uid(), banco: "Banco Esmeralda", tipo: "Conta corrente", owner: "mae", saldo: 8130.45 },
         { id: uid(), banco: "Banco Violeta", tipo: "Conta conjunta", owner: "familia", saldo: 4980.0 },
       ],
       cards: [
-        { id: uid(), nome: "Violeta Black", bandeira: "Mastercard", owner: "admin", limite: 15000, usado: 2680, fechamento: 28, vencimento: 10 },
-        { id: uid(), nome: "Esmeralda Gold", bandeira: "Visa", owner: "admin", limite: 12000, usado: 1840, fechamento: 25, vencimento: 5 },
+        { id: uid(), nome: "Violeta Black", bandeira: "Mastercard", owner: "pai", limite: 15000, usado: 2680, fechamento: 28, vencimento: 10 },
+        { id: uid(), nome: "Esmeralda Gold", bandeira: "Visa", owner: "mae", limite: 12000, usado: 1840, fechamento: 25, vencimento: 5 },
       ],
       investments: [
         { id: uid(), nome: "Tesouro Selic 2029", tipo: "Renda fixa", owner: "familia", valor: 38500 },
-        { id: uid(), nome: "CDB Banco Esmeralda", tipo: "Renda fixa", owner: "admin", valor: 21200 },
-        { id: uid(), nome: "Fundo de ações", tipo: "Renda variável", owner: "admin", valor: 14700 },
+        { id: uid(), nome: "CDB Banco Esmeralda", tipo: "Renda fixa", owner: "mae", valor: 21200 },
+        { id: uid(), nome: "Fundo de ações", tipo: "Renda variável", owner: "pai", valor: 14700 },
         { id: uid(), nome: "Reserva de emergência", tipo: "Liquidez diária", owner: "familia", valor: 26800 },
       ],
       dreams: [
-        { id: uid(), titulo: "Viagem Internacional", descricao: "Europa em família nas férias de julho", categoria: "familia", emoji: "✈️", valorMeta: 28000, valorEconomizado: 16800, prazo: isoAddDays(330), prioridade: "alta", createdBy: "admin" },
-        { id: uid(), titulo: "Casa Nova", descricao: "Entrada para a casa com quintal", categoria: "familia", emoji: "🏡", valorMeta: 120000, valorEconomizado: 41500, prazo: isoAddDays(900), prioridade: "media", createdBy: "admin" },
-        { id: uid(), titulo: "Carro Novo", descricao: "Trocar o carro em 2027", categoria: "admin", emoji: "🚗", valorMeta: 45000, valorEconomizado: 12300, prazo: isoAddDays(540), prioridade: "baixa", createdBy: "admin" },
+        { id: uid(), titulo: "Viagem Internacional", descricao: "Europa em família nas férias de julho", categoria: "familia", emoji: "✈️", valorMeta: 28000, valorEconomizado: 16800, prazo: isoAddDays(330), prioridade: "alta", createdBy: "mae" },
+        { id: uid(), titulo: "Casa Nova", descricao: "Entrada para a casa com quintal", categoria: "familia", emoji: "🏡", valorMeta: 120000, valorEconomizado: 41500, prazo: isoAddDays(900), prioridade: "media", createdBy: "pai" },
+        { id: uid(), titulo: "Carro do Pai", descricao: "Trocar o carro em 2027", categoria: "pai", emoji: "🚗", valorMeta: 45000, valorEconomizado: 12300, prazo: isoAddDays(540), prioridade: "baixa", createdBy: "pai" },
         { id: uid(), titulo: "Intercâmbio no Canadá", descricao: "Curso de inglês de 6 meses", categoria: "dep", emoji: "🍁", valorMeta: 35000, valorEconomizado: 6200, prazo: isoAddDays(700), prioridade: "alta", createdBy: "dep" },
         { id: uid(), titulo: "Notebook novo", descricao: "Para os estudos e projetos", categoria: "dep", emoji: "💻", valorMeta: 4500, valorEconomizado: 1850, prazo: isoAddDays(180), prioridade: "media", createdBy: "dep" },
-        { id: uid(), titulo: "Reserva Financeira", descricao: "12 meses de despesas guardados", categoria: "familia", emoji: "🛡️", valorMeta: 90000, valorEconomizado: 26800, prazo: isoAddDays(720), prioridade: "alta", createdBy: "admin" },
+        { id: uid(), titulo: "Reserva Financeira", descricao: "12 meses de despesas guardados", categoria: "familia", emoji: "🛡️", valorMeta: 90000, valorEconomizado: 26800, prazo: isoAddDays(720), prioridade: "alta", createdBy: "mae" },
       ],
       documents: [
-        { id: uid(), nome: "Apólice — Seguro Residencial 2026", categoria: "Seguros & Apólices", descricao: "Vigência até dez/2026", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-40) },
-        { id: uid(), nome: "Contrato de financiamento — Casa", categoria: "Contratos", descricao: "Banco Violeta · 240 parcelas", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-120) },
-        { id: uid(), nome: "CRLV — Carro da família", categoria: "Veículos", descricao: "Documento 2026 quitado", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-15) },
+        { id: uid(), nome: "Apólice — Seguro Residencial 2026", categoria: "Seguros & Apólices", descricao: "Vigência até dez/2026", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "pai", data: isoAddDays(-40) },
+        { id: uid(), nome: "Contrato de financiamento — Casa", categoria: "Contratos", descricao: "Banco Violeta · 240 parcelas", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "mae", data: isoAddDays(-120) },
+        { id: uid(), nome: "CRLV — Carro da família", categoria: "Veículos", descricao: "Documento 2026 quitado", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "pai", data: isoAddDays(-15) },
       ],
       invoices: [
-        { id: uid(), nome: "Fatura Violeta Black — junho", origem: "Cartão de crédito", valor: 2410.33, competencia: monthKey(isoAddDays(-30)), vencimento: isoAddDays(-20), status: "paga", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-22) },
-        { id: uid(), nome: "Energia elétrica — mês atual", origem: "Energia", valor: 342.5, competencia: monthKey(todayISO()), vencimento: isoAddDays(3), status: "pendente", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "admin", data: isoAddDays(-2) },
+        { id: uid(), nome: "Fatura Violeta Black — junho", origem: "Cartão de crédito", valor: 2410.33, competencia: monthKey(isoAddDays(-30)), vencimento: isoAddDays(-20), status: "paga", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "pai", data: isoAddDays(-22) },
+        { id: uid(), nome: "Energia elétrica — mês atual", origem: "Energia", valor: 342.5, competencia: monthKey(todayISO()), vencimento: isoAddDays(3), status: "pendente", tipoArquivo: "pdf", tamanho: 0, dataUrl: null, demo: true, enviadoPor: "mae", data: isoAddDays(-2) },
       ],
       piggy: { saldo: 185, historico: [] },
       personalGoals: [
@@ -224,16 +227,19 @@
     }
   }
 
-  // migra estados salvos por versões anteriores (perfis pai/mãe/filha → admin/dependente)
+  // migra estados salvos por versões anteriores:
+  // v1 usava pai/mãe/filha · v2 usava admin/dependente · atual: pai/mãe/dep
   function migrateState() {
-    const mapUser = (k) => (k === "pai" || k === "mae") ? "admin" : (k === "filha" ? "dep" : k);
+    const mapUser = (k) => (k === "filha" ? "dep" : k === "admin" ? "mae" : k);
     if (!state.customCategories) state.customCategories = [];
+    if (!state.auth) state.auth = {};
     if (state.currentUser) state.currentUser = mapUser(state.currentUser);
-    if (!state.memberNames || state.memberNames.pai !== undefined || state.memberNames.filha !== undefined) {
+    {
       const old = state.memberNames || {};
       state.memberNames = {
-        admin: old.admin || old.mae || old.pai || "Admin",
-        dep: old.dep || old.filha || "Dependente",
+        pai: old.pai || "Roberto",
+        mae: old.mae || old.admin || "Adriana",
+        dep: old.dep || old.filha || "Sofia",
       };
     }
     (state.transactions || []).forEach((t) => { t.owner = mapUser(t.owner); });
@@ -319,10 +325,149 @@
   function login(userKey) {
     state.currentUser = userKey;
     save();
+    closeModals();
     $("#loginScreen").style.display = "none";
     $("#appShell").classList.add("active");
     renderShell();
     goto(isAdmin() ? "dashboard" : "painel-filha");
+  }
+
+  /* ---------------- autenticação (senha local + recuperação) ----------------
+     Proteção local: a senha nunca é salva em texto — guardamos apenas o hash
+     SHA-256 com sal. Impede acesso casual no mesmo dispositivo; a segurança
+     de nível bancário (servidor + 2FA) está no roteiro de produção. */
+
+  let authUser = null;
+
+  async function sha256Hex(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  const randSalt = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+  function genRecoveryCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const pick = () => chars[crypto.getRandomValues(new Uint32Array(1))[0] % chars.length];
+    return `${pick()}${pick()}${pick()}${pick()}-${pick()}${pick()}${pick()}${pick()}`;
+  }
+
+  const normAnswer = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const normCode = (s) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+  function requestLogin(userKey) {
+    authUser = userKey;
+    showAuth(state.auth && state.auth[userKey] ? "login" : "create");
+  }
+
+  function showAuth(mode, extra = {}) {
+    const name = uname(authUser);
+    const body = $("#authBody");
+    const views = {
+      create: `
+        <h3>👋 Olá, ${esc(name)}!</h3>
+        <p class="auth-sub">Primeiro acesso: crie sua senha e escolha uma pergunta de segurança para recuperação.</p>
+        <div class="form-field"><label>Nova senha (mín. 4 caracteres)</label><input type="password" id="authPwd1" autocomplete="new-password"></div>
+        <div class="form-field"><label>Confirmar senha</label><input type="password" id="authPwd2" autocomplete="new-password"></div>
+        <div class="form-field"><label>Pergunta de segurança</label><input id="authQ" placeholder="Ex.: Nome do meu primeiro pet"></div>
+        <div class="form-field"><label>Resposta</label><input id="authA" autocomplete="off"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" data-close-modal>Cancelar</button><button class="btn btn-primary" id="authCreateBtn">Criar senha e entrar</button></div>`,
+      showcode: `
+        <h3>🔑 Guarde seu código de recuperação</h3>
+        <p class="auth-sub">Se esquecer a senha <strong>e</strong> a resposta de segurança, este código é o seu plano B. Anote em local seguro — ele aparece só uma vez.</p>
+        <div class="recovery-code">${extra.code}</div>
+        <div class="modal-actions"><button class="btn btn-green" id="authCodeOkBtn">Anotei, entrar no app</button></div>`,
+      login: `
+        <h3>${USERS[authUser].avatar} ${esc(name)}</h3>
+        <div class="form-field"><label>Senha</label><input type="password" id="authPwd" autocomplete="current-password"></div>
+        <div class="modal-actions" style="justify-content:space-between;">
+          <button class="btn btn-ghost btn-sm" id="authForgotBtn">Esqueci minha senha</button>
+          <button class="btn btn-primary" id="authLoginBtn">Entrar</button>
+        </div>`,
+      recover: `
+        <h3>🛟 Recuperar acesso — ${esc(name)}</h3>
+        <p class="auth-sub">Escolha como quer comprovar que é você:</p>
+        <button class="quiz-option" id="authRecQBtn">🧠 Responder minha pergunta de segurança</button>
+        <button class="quiz-option" id="authRecCBtn">🔑 Usar meu código de recuperação</button>
+        <div class="modal-actions"><button class="btn btn-ghost" data-close-modal>Cancelar</button></div>`,
+      "recover-question": `
+        <h3>🧠 Pergunta de segurança</h3>
+        <p class="auth-sub">${esc((state.auth[authUser] || {}).question || "")}</p>
+        <div class="form-field"><label>Sua resposta</label><input id="authRecA" autocomplete="off"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" data-close-modal>Cancelar</button><button class="btn btn-primary" id="authRecABtn">Verificar</button></div>`,
+      "recover-code": `
+        <h3>🔑 Código de recuperação</h3>
+        <p class="auth-sub">Digite o código que você anotou quando criou a senha (formato XXXX-XXXX).</p>
+        <div class="form-field"><label>Código</label><input id="authRecC" autocomplete="off" style="text-transform:uppercase"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" data-close-modal>Cancelar</button><button class="btn btn-primary" id="authRecCVerifyBtn">Verificar</button></div>`,
+      reset: `
+        <h3>🔓 Identidade confirmada!</h3>
+        <p class="auth-sub">Defina sua nova senha, ${esc(name)}.</p>
+        <div class="form-field"><label>Nova senha (mín. 4 caracteres)</label><input type="password" id="authPwd1" autocomplete="new-password"></div>
+        <div class="form-field"><label>Confirmar senha</label><input type="password" id="authPwd2" autocomplete="new-password"></div>
+        <div class="modal-actions"><button class="btn btn-primary" id="authResetBtn">Salvar nova senha e entrar</button></div>`,
+    };
+    body.innerHTML = views[mode];
+    openModal("auth");
+    const focus = body.querySelector("input");
+    if (focus) setTimeout(() => focus.focus(), 60);
+
+    const on = (id, fn) => { const el = $(id, body); if (el) el.addEventListener("click", fn); };
+
+    on("#authCreateBtn", async () => {
+      const p1 = $("#authPwd1").value, p2 = $("#authPwd2").value;
+      const q = $("#authQ").value.trim(), a = $("#authA").value;
+      if (p1.length < 4) return toast("A senha precisa ter pelo menos 4 caracteres.");
+      if (p1 !== p2) return toast("As senhas não conferem.");
+      if (!q || !normAnswer(a)) return toast("Preencha a pergunta e a resposta de segurança.");
+      const salt = randSalt(), aSalt = randSalt(), rSalt = randSalt();
+      const code = genRecoveryCode();
+      state.auth[authUser] = {
+        salt, hash: await sha256Hex(salt + p1),
+        question: q, aSalt, aHash: await sha256Hex(aSalt + normAnswer(a)),
+        rSalt, rHash: await sha256Hex(rSalt + normCode(code)),
+      };
+      save();
+      showAuth("showcode", { code });
+    });
+
+    on("#authCodeOkBtn", () => login(authUser));
+
+    on("#authLoginBtn", async () => {
+      const a = state.auth[authUser];
+      if (await sha256Hex(a.salt + $("#authPwd").value) === a.hash) login(authUser);
+      else toast("❌ Senha incorreta.");
+    });
+    const pwdField = $("#authPwd", body);
+    if (pwdField) pwdField.addEventListener("keydown", (e) => { if (e.key === "Enter") $("#authLoginBtn").click(); });
+
+    on("#authForgotBtn", () => showAuth("recover"));
+    on("#authRecQBtn", () => showAuth("recover-question"));
+    on("#authRecCBtn", () => showAuth("recover-code"));
+
+    on("#authRecABtn", async () => {
+      const a = state.auth[authUser];
+      if (await sha256Hex(a.aSalt + normAnswer($("#authRecA").value)) === a.aHash) showAuth("reset");
+      else toast("❌ Resposta incorreta.");
+    });
+
+    on("#authRecCVerifyBtn", async () => {
+      const a = state.auth[authUser];
+      if (await sha256Hex(a.rSalt + normCode($("#authRecC").value)) === a.rHash) showAuth("reset");
+      else toast("❌ Código inválido.");
+    });
+
+    on("#authResetBtn", async () => {
+      const p1 = $("#authPwd1").value, p2 = $("#authPwd2").value;
+      if (p1.length < 4) return toast("A senha precisa ter pelo menos 4 caracteres.");
+      if (p1 !== p2) return toast("As senhas não conferem.");
+      const a = state.auth[authUser];
+      a.salt = randSalt();
+      a.hash = await sha256Hex(a.salt + p1);
+      save();
+      toast("✅ Senha redefinida!");
+      login(authUser);
+    });
   }
 
   function logout() {
@@ -1447,7 +1592,7 @@
       <div class="stat-card"><div class="label">Lançamentos</div><div class="value">${txs.length}</div></div>`;
 
     // por proprietário — relatórios individuais e consolidado
-    const owners = ["admin", "familia"];
+    const owners = ["pai", "mae", "familia"];
     $("#repOwner").innerHTML = `
       <table class="data">
         <thead><tr><th>Proprietário</th><th style="text-align:right">Receitas</th><th style="text-align:right">Despesas</th><th style="text-align:right">Saldo</th></tr></thead>
@@ -1544,8 +1689,28 @@
 
   function renderConfig() {
     $("#cfgFamilyName").value = state.familyName;
-    $("#cfgNameAdmin").value = uname("admin");
+    $("#cfgNamePai").value = uname("pai");
+    $("#cfgNameMae").value = uname("mae");
     $("#cfgNameDep").value = uname("dep");
+
+    // segurança: redefinição de senha por um administrador
+    $("#cfgSecurityList").innerHTML = Object.keys(USERS).map((key) => {
+      const hasPwd = !!(state.auth && state.auth[key]);
+      return `
+      <div class="mission-item">
+        <span class="m-ico">${USERS[key].avatar}</span>
+        <span><strong>${esc(uname(key))}</strong><span>${hasPwd ? "🔒 senha definida" : "⚠️ ainda sem senha — será criada no primeiro acesso"}</span></span>
+        ${hasPwd ? `<button class="btn btn-danger-ghost btn-sm" data-reset-pwd="${key}" style="margin-left:auto">🔑 Redefinir senha</button>` : ""}
+      </div>`;
+    }).join("");
+
+    $$("[data-reset-pwd]", $("#cfgSecurityList")).forEach((b) => b.addEventListener("click", () => {
+      const key = b.dataset.resetPwd;
+      if (!confirm(`Apagar a senha de ${uname(key)}? No próximo acesso, uma nova senha será criada.`)) return;
+      delete state.auth[key];
+      save(); renderConfig();
+      toast(`🔑 Senha de ${uname(key)} redefinida.`);
+    }));
 
     $("#cfgCatList").innerHTML = [
       ...CATEGORIES.map((c) => `<span class="filter-chip" style="cursor:default">${esc(c)}</span>`),
@@ -1687,7 +1852,7 @@
     // login
     $("#profileList").addEventListener("click", (e) => {
       const btn = e.target.closest("[data-login]");
-      if (btn) login(btn.dataset.login);
+      if (btn) requestLogin(btn.dataset.login);
     });
 
     $("#logoutBtn").addEventListener("click", logout);
@@ -1828,7 +1993,8 @@
     $("#cfgSave").addEventListener("click", () => {
       state.familyName = $("#cfgFamilyName").value.trim() || state.familyName;
       state.memberNames = {
-        admin: $("#cfgNameAdmin").value.trim() || uname("admin"),
+        pai: $("#cfgNamePai").value.trim() || uname("pai"),
+        mae: $("#cfgNameMae").value.trim() || uname("mae"),
         dep: $("#cfgNameDep").value.trim() || uname("dep"),
       };
       save();

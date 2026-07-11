@@ -11,12 +11,21 @@ educação financeira e realização de sonhos, para toda a família.
 
 1. Abra `index.html` no navegador (ou sirva a pasta com `npx serve .`).
    Com o GitHub Pages ativado, o app fica disponível direto na web.
-2. Escolha um dos **dois perfis** na tela inicial:
-   - **👤 Admin** → acesso completo às finanças, documentos e faturas.
-   - **🌟 Dependente** → ambiente seguro de educação financeira e sonhos,
-     sem acesso às finanças.
+2. Escolha um perfil na tela inicial:
+   - **👨 Pai (Roberto)** e **👩 Mãe (Adriana)** → administradores com acesso completo.
+   - **🌟 Dependente (Sofia)** → ambiente seguro de educação financeira e sonhos.
 
-   Os nomes exibidos em cada perfil são personalizáveis em **Configurações**.
+   Nomes personalizáveis em **Configurações**.
+3. No primeiro acesso, cada membro **cria sua senha** e uma pergunta de
+   segurança, e recebe um **código de recuperação** de uso único.
+
+**Recuperação de senha (3 caminhos):** responder a pergunta de segurança,
+usar o código de recuperação, ou pedir a um administrador para redefinir
+em Configurações → Segurança.
+
+**📱 É um app instalável (PWA):** ao abrir o site no celular, use
+"Adicionar à tela inicial" — ele ganha ícone próprio, abre em tela cheia
+sem a barra do navegador e funciona offline.
 
 Os dados ficam salvos no navegador (`localStorage`) — nada sai da sua máquina.
 
@@ -34,7 +43,9 @@ Os dados ficam salvos no navegador (`localStorage`) — nada sai da sua máquina
 | 🌈 **Vision Board** | Mural de sonhos da família com progresso, prioridade, prazo e frase motivacional |
 | 🌟 **Área da filha** | Cofrinho virtual, metas pessoais, missões, medalhas, quiz e simulador de poupança |
 | 📈 **Relatórios** | Resumo mensal, individual e consolidado por proprietário, despesas por categoria, comparativo de 6 meses, exportação CSV e impressão/PDF |
-| ⚙️ **Configurações** | Nome da família, nomes dos membros, categorias personalizadas e restauração dos dados de demonstração |
+| ⚙️ **Configurações** | Nome da família, nomes dos membros, categorias personalizadas, redefinição de senhas e restauração dos dados |
+| 🔐 **Login com senha** | Senha individual por membro (hash SHA-256 + sal, salvo apenas no dispositivo), pergunta de segurança e código de recuperação |
+| 📱 **PWA** | Instalável no celular e no computador, com ícone próprio, tela cheia e funcionamento offline |
 
 ⭐ = áreas novas solicitadas pelo cliente (upload de documentação e de faturas,
 comuns aos pais).
@@ -52,7 +63,7 @@ comuns aos pais).
 
 ## 🔐 Permissões
 
-- **Admin**: acesso total — finanças, documentos, faturas, relatórios e configurações.
+- **Pai e Mãe (admins)**: acesso total — finanças, documentos, faturas, relatórios e configurações — com as mesmas permissões.
 - **Dependente**: vê apenas Vision Board (edita só os próprios sonhos), cofrinho,
   metas pessoais, missões, conquistas e educação financeira.
 - Documentos e faturas são da **família**: quem enviou fica registrado e os

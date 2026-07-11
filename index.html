@@ -8,7 +8,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=4">
+  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0b0e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💜</text></svg>">
 </head>
 <body>
@@ -135,7 +140,8 @@
               <label>Proprietário dos lançamentos</label>
               <select id="importOwner">
                 <option value="familia">👨‍👩‍👧 Família</option>
-                <option value="admin">👤 Admin</option>
+                <option value="pai">👨 Pai</option>
+                <option value="mae">👩 Mãe</option>
               </select>
             </div>
           </div>
@@ -364,8 +370,12 @@
                 <input id="cfgFamilyName" placeholder="Família Oliveira">
               </div>
               <div class="form-field">
-                <label>👤 Nome do(a) administrador(a)</label>
-                <input id="cfgNameAdmin">
+                <label>👨 Nome do pai (admin)</label>
+                <input id="cfgNamePai">
+              </div>
+              <div class="form-field">
+                <label>👩 Nome da mãe (admin)</label>
+                <input id="cfgNameMae">
               </div>
               <div class="form-field">
                 <label>🌟 Nome do(a) dependente</label>
@@ -385,6 +395,11 @@
               <button class="btn btn-green" id="cfgAddCat">+ Adicionar</button>
             </div>
           </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><h3>🔐 Segurança — senhas dos membros</h3></div>
+          <p style="font-size:12.5px; color:var(--text-3); margin-bottom:12px;">Cada membro cria a própria senha no primeiro acesso. Se alguém esquecer a senha, a resposta de segurança e o código de recuperação, um administrador pode redefinir aqui.</p>
+          <div id="cfgSecurityList"></div>
         </div>
         <div class="panel" style="border-color:rgba(248,113,113,0.3);">
           <div class="panel-title"><h3>⚠️ Zona de atenção</h3></div>
@@ -409,7 +424,7 @@
         </div>
         <div class="form-field">
           <label>Proprietário</label>
-          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="admin">👤 Admin</option></select>
+          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select>
         </div>
         <div class="form-field full">
           <label>Descrição</label>
@@ -456,7 +471,8 @@
           <label>Categoria</label>
           <select name="categoria" id="dreamCatSelect">
             <option value="familia">🏠 Família</option>
-            <option value="admin">👤 Admin</option>
+            <option value="pai">👨 Pai</option>
+            <option value="mae">👩 Mãe</option>
             <option value="dep">🌟 Dependente</option>
           </select>
         </div>
@@ -541,9 +557,21 @@
     </div>
   </div>
 
+  <!-- Autenticação -->
+  <div class="modal-overlay" id="modal-auth">
+    <div class="modal" style="max-width:420px;">
+      <div id="authBody"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/app.js?v=4"></script>
+  <script src="js/app.js?v=5"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("sw.js");
+    }
+  </script>
 </body>
 </html>

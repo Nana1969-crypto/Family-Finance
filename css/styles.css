@@ -1115,3 +1115,24 @@ table.data tr:hover td { background: var(--surface-2); }
   body { background: #fff; }
   .panel, .stat-card { break-inside: avoid; box-shadow: none; }
 }
+
+/* ---------- Autenticação ---------- */
+.auth-sub { font-size: 13px; color: var(--text-3); margin: -8px 0 16px; line-height: 1.5; }
+
+#authBody h3 { font-size: 18px; margin-bottom: 14px; letter-spacing: -0.01em; }
+#authBody .form-field { margin-bottom: 12px; }
+
+.recovery-code {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px dashed var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: 18px;
+  user-select: all;
+}
