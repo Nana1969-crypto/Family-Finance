@@ -2041,7 +2041,9 @@
   renderLogin();
   bindGlobal();
 
-  if (state.currentUser && USERS[state.currentUser]) {
-    login(state.currentUser);
+  // sempre pedir senha ao abrir: nenhuma sessão anterior é retomada
+  if (state.currentUser) {
+    state.currentUser = null;
+    save();
   }
 })();
