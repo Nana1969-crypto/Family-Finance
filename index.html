@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=6">
+  <link rel="stylesheet" href="css/styles.css?v=7">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b0b0e">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,8 +24,9 @@
       <div class="brand-mark">💎</div>
       <h1>Family <span class="accent">Finance</span></h1>
       <p class="login-sub">Planejamento, organização e sonhos — juntos, em família.</p>
-      <div class="profile-list" id="profileList"></div>
-      <p class="login-note">🔒 Ambiente protegido · cada perfil vê apenas o que lhe pertence</p>
+      <div id="cloudBox"></div>
+      <div class="profile-list" id="profileList" style="display:none;"></div>
+      <p class="login-note" id="loginNote">🔒 Conta protegida por senha · recuperação por e-mail</p>
     </div>
   </div>
 
@@ -385,6 +386,7 @@
             <div class="modal-actions" style="justify-content:flex-start;">
               <button class="btn btn-primary" id="cfgSave">Salvar alterações</button>
             </div>
+            <div id="cfgInviteBox"></div>
           </div>
           <div class="panel">
             <div class="panel-title"><h3>🏷️ Categorias personalizadas</h3></div>
@@ -567,7 +569,8 @@
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/app.js?v=6"></script>
+  <script src="js/vendor/supabase.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js");

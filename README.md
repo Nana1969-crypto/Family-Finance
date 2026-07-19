@@ -44,7 +44,8 @@ Os dados ficam salvos no navegador (`localStorage`) — nada sai da sua máquina
 | 🌟 **Área da filha** | Cofrinho virtual, metas pessoais, missões, medalhas, quiz e simulador de poupança |
 | 📈 **Relatórios** | Resumo mensal, individual e consolidado por proprietário, despesas por categoria, comparativo de 6 meses, exportação CSV e impressão/PDF |
 | ⚙️ **Configurações** | Nome da família, nomes dos membros, categorias personalizadas, redefinição de senhas e restauração dos dados |
-| 🔐 **Login com senha** | Senha individual por membro (hash SHA-256 + sal, salvo apenas no dispositivo), pergunta de segurança e código de recuperação |
+| 🔐 **Login com conta (Supabase)** | Conta por e-mail e senha, recuperação por link no e-mail, e família conectada por códigos de convite — com modo local opcional |
+| ☁️ **Sincronização** | Os dados da família vivem no Supabase (Postgres + RLS): o que um lança aparece para os outros; o servidor garante que a dependente não acessa o financeiro |
 | 📱 **PWA** | Instalável no celular e no computador, com ícone próprio, tela cheia e funcionamento offline |
 
 ⭐ = áreas novas solicitadas pelo cliente (upload de documentação e de faturas,
@@ -68,6 +69,11 @@ comuns aos pais).
   metas pessoais, missões, conquistas e educação financeira.
 - Documentos e faturas são da **família**: quem enviou fica registrado e os
   administradores gerenciam tudo.
+
+## ☁️ Configurar a nuvem
+
+O passo a passo (SQL + URL do site + e-mail) está em
+[`docs/SUPABASE-SETUP.md`](docs/SUPABASE-SETUP.md).
 
 ## 🚀 Evolução para produção
 

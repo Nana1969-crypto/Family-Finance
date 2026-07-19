@@ -225,6 +225,7 @@
     } catch (e) {
       toast("⚠️ Armazenamento cheio — remova arquivos grandes para continuar salvando.");
     }
+    schedulePush(); // sincroniza com a nuvem quando logado por conta
   }
 
   // migra estados salvos por versões anteriores:
@@ -473,6 +474,10 @@
   function logout() {
     state.currentUser = null;
     save();
+    if (cloudMode && sb) {
+      sb.auth.signOut().finally(() => location.reload());
+      return;
+    }
     $("#appShell").classList.remove("active");
     $("#loginScreen").style.display = "flex";
   }
@@ -1712,6 +1717,13 @@
       toast(`🔑 Senha de ${uname(key)} redefinida.`);
     }));
 
+    // com conta na nuvem, a senha é da conta (recuperada por e-mail) — esconde o painel local
+    if (cloudMode) {
+      const secPanel = $("#cfgSecurityList").closest(".panel");
+      if (secPanel) secPanel.style.display = "none";
+    }
+    renderInvitesInConfig();
+
     $("#cfgCatList").innerHTML = [
       ...CATEGORIES.map((c) => `<span class="filter-chip" style="cursor:default">${esc(c)}</span>`),
       ...(state.customCategories || []).map((c) =>
@@ -2034,11 +2046,308 @@
     $("#importCancel").addEventListener("click", () => { importRows = []; renderImportPreview(); });
   }
 
+  /* ---------------- nuvem (Supabase): login por e-mail + sincronização ---------------- */
+
+  const SUPABASE_URL = "https://abjxpknfoborkhoawnyb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_kwHHCkVd3tNSUdOkqKCVKw_83uY5VXU";
+
+  // separação imposta também no servidor (RLS): dependente não lê o escopo 'admin'
+  const ADMIN_SCOPE_KEYS = ["transactions", "accounts", "cards", "investments", "documents", "invoices", "customCategories"];
+  const SHARED_SCOPE_KEYS = ["familyName", "memberNames", "dreams", "piggy", "personalGoals", "missions", "badges"];
+
+  let sb = null;
+  let cloudMode = false;
+  let cloudMember = null; // { family_id, role, member_key }
+  let lastSeen = { admin: null, shared: null };
+  let pushTimer = null;
+  let suppressPush = false;
+
+  const MEMBER_CACHE_KEY = "ff-cloud-member";
+
+  function cloudAvailable() {
+    if (sb) return true;
+    if (!window.supabase) return false;
+    try {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      return true;
+    } catch { return false; }
+  }
+
+  function cloudIsAdmin() { return cloudMember && cloudMember.role === "admin"; }
+
+  function pickKeys(keys) {
+    const out = {};
+    for (const k of keys) out[k] = state[k];
+    return out;
+  }
+
+  function applyScope(row) {
+    const keys = row.scope === "admin" ? ADMIN_SCOPE_KEYS : SHARED_SCOPE_KEYS;
+    suppressPush = true;
+    for (const k of keys) {
+      if (row.data && row.data[k] !== undefined) state[k] = row.data[k];
+    }
+    // garante estruturas mínimas
+    for (const k of ["transactions", "accounts", "cards", "investments", "documents", "invoices", "dreams", "personalGoals", "missions", "badges", "customCategories"]) {
+      if (!Array.isArray(state[k])) state[k] = state[k] || [];
+    }
+    if (!state.piggy) state.piggy = { saldo: 0, historico: [] };
+    save();
+    suppressPush = false;
+    lastSeen[row.scope] = row.updated_at;
+    if (state.currentUser && currentPage) renderPage(currentPage);
+  }
+
+  async function pushCloud() {
+    if (!cloudMode || !sb || !cloudMember || suppressPush) return;
+    const scopes = cloudIsAdmin() ? ["admin", "shared"] : ["shared"];
+    for (const scope of scopes) {
+      const payload = pickKeys(scope === "admin" ? ADMIN_SCOPE_KEYS : SHARED_SCOPE_KEYS);
+      try {
+        const { data, error } = await sb.from("family_data")
+          .upsert({ family_id: cloudMember.family_id, scope, data: payload, updated_at: new Date().toISOString() }, { onConflict: "family_id,scope" })
+          .select("updated_at")
+          .single();
+        if (!error && data) lastSeen[scope] = data.updated_at;
+      } catch { /* offline — o próximo save tenta de novo */ }
+    }
+  }
+
+  function schedulePush() {
+    if (!cloudMode || suppressPush) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushCloud, 1200);
+  }
+
+  async function pullCloud(applyAll) {
+    if (!sb || !cloudMember) return;
+    try {
+      const { data: rows, error } = await sb.from("family_data").select("scope,data,updated_at");
+      if (error || !rows) return;
+      let hasRemoteData = false;
+      for (const row of rows) {
+        const empty = !row.data || Object.keys(row.data).length === 0;
+        if (!empty) hasRemoteData = true;
+        if (empty) continue;
+        if (applyAll || row.updated_at !== lastSeen[row.scope]) applyScope(row);
+      }
+      // família recém-criada: o primeiro admin sobe os dados locais como ponto de partida
+      if (!hasRemoteData && cloudIsAdmin()) await pushCloud();
+    } catch { /* offline */ }
+  }
+
+  function startRealtime() {
+    if (!sb || !cloudMember) return;
+    try {
+      sb.channel("ff-sync")
+        .on("postgres_changes",
+          { event: "*", schema: "public", table: "family_data", filter: `family_id=eq.${cloudMember.family_id}` },
+          (p) => { if (p.new && p.new.updated_at !== lastSeen[p.new.scope]) applyScope(p.new); })
+        .subscribe();
+    } catch { /* sem realtime, o foco da janela sincroniza */ }
+    window.addEventListener("focus", () => pullCloud(false));
+  }
+
+  async function ensureMembership() {
+    try {
+      const { data: session } = await sb.auth.getSession();
+      const uid = session && session.session && session.session.user && session.session.user.id;
+      if (!uid) return false;
+      const { data: rows, error } = await sb.from("members").select("family_id,role,member_key").eq("user_id", uid).limit(1);
+      if (error) { gateMsg("Erro ao verificar a família: " + error.message); return true; }
+      const mem = rows && rows[0];
+      if (!mem) { renderCloudGate("family"); return true; }
+      cloudMember = mem;
+      cloudMode = true;
+      localStorage.setItem(MEMBER_CACHE_KEY, JSON.stringify(mem));
+      await pullCloud(true);
+      startRealtime();
+      login(mem.member_key);
+      return true;
+    } catch (e) {
+      gateMsg("Sem conexão com o servidor — tente de novo ou use o modo offline.");
+      return true;
+    }
+  }
+
+  function gateMsg(msg, ok) {
+    const el = $("#cloudMsg");
+    if (el) { el.textContent = msg || ""; el.style.color = ok ? "var(--green-accent)" : "var(--tag-red)"; }
+  }
+
+  function renderCloudGate(mode, extra = {}) {
+    const box = $("#cloudBox");
+    $("#profileList").style.display = "none";
+    box.style.display = "";
+
+    const views = {
+      auth: `
+        <div class="form-field" style="text-align:left"><label>E-mail</label><input id="cloudEmail" type="email" autocomplete="email" value="${esc(extra.email || "")}"></div>
+        <div class="form-field" style="text-align:left"><label>Senha</label><input id="cloudPwd" type="password" autocomplete="current-password"></div>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button class="btn btn-primary" id="cloudLoginBtn" style="flex:1">Entrar</button>
+          <button class="btn btn-ghost" id="cloudSignupBtn" style="flex:1">Criar conta</button>
+        </div>
+        <button class="icon-btn" id="cloudForgotBtn" style="margin-top:10px; width:100%">Esqueci minha senha</button>
+        ${extra.offline ? `<button class="btn btn-green" id="cloudOfflineBtn" style="margin-top:10px; width:100%">📴 Entrar offline (dados deste aparelho)</button>` : ""}
+        <p id="cloudMsg" style="font-size:12.5px; margin-top:10px; min-height:18px;"></p>
+        <button class="icon-btn" id="localModeBtn" style="width:100%; opacity:.75">Usar sem conta (modo local neste aparelho)</button>`,
+      family: `
+        <p class="auth-sub" style="text-align:left">Conta criada! Agora conecte-se à sua família:</p>
+        <div class="panel" style="text-align:left; margin-bottom:12px; padding:16px;">
+          <strong style="font-size:14px;">🏡 Criar a família</strong>
+          <div class="form-field" style="margin-top:10px;"><label>Nome da família</label><input id="famName" placeholder="Família Oliveira"></div>
+          <div class="form-field"><label>Você é...</label>
+            <select id="famMyKey"><option value="mae">👩 Mãe</option><option value="pai">👨 Pai</option></select></div>
+          <button class="btn btn-primary" id="famCreateBtn" style="width:100%">Criar família</button>
+        </div>
+        <div class="panel" style="text-align:left; padding:16px;">
+          <strong style="font-size:14px;">🎟️ Entrar com código de convite</strong>
+          <div class="form-field" style="margin-top:10px;"><label>Código</label><input id="famCode" placeholder="XXXXXXXX" style="text-transform:uppercase"></div>
+          <div class="form-field"><label>Se for convite de admin, você é...</label>
+            <select id="famJoinKey"><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select></div>
+          <button class="btn btn-green" id="famJoinBtn" style="width:100%">Entrar na família</button>
+        </div>
+        <p id="cloudMsg" style="font-size:12.5px; margin-top:10px; min-height:18px;"></p>
+        <button class="icon-btn" id="cloudSignoutBtn" style="width:100%; opacity:.75">Sair da conta</button>`,
+      invites: `
+        <h3 style="font-size:17px; margin-bottom:8px;">🎟️ Convites da família</h3>
+        <p class="auth-sub">Envie estes códigos para os outros membros usarem em "Entrar com código":</p>
+        <div style="text-align:left; font-size:14px; line-height:2;">
+          <div>👨👩 <strong>Admin (Roberto/Adriana):</strong> <span class="recovery-code" style="font-size:16px; padding:4px 10px; display:inline;">${esc(extra.admin_code || "")}</span></div>
+          <div>🌟 <strong>Dependente (Sofia):</strong> <span class="recovery-code" style="font-size:16px; padding:4px 10px; display:inline;">${esc(extra.dep_code || "")}</span></div>
+        </div>
+        <p class="auth-sub" style="margin-top:12px;">Os códigos também ficam em Configurações → Família.</p>
+        <button class="btn btn-green" id="invitesOkBtn" style="width:100%">Continuar para o app</button>`,
+      reset: `
+        <h3 style="font-size:17px; margin-bottom:8px;">🔓 Defina sua nova senha</h3>
+        <div class="form-field" style="text-align:left"><label>Nova senha (mín. 6 caracteres)</label><input id="cloudPwd1" type="password" autocomplete="new-password"></div>
+        <div class="form-field" style="text-align:left"><label>Confirmar senha</label><input id="cloudPwd2" type="password" autocomplete="new-password"></div>
+        <button class="btn btn-primary" id="cloudResetBtn" style="width:100%; margin-top:10px;">Salvar nova senha</button>
+        <p id="cloudMsg" style="font-size:12.5px; margin-top:10px; min-height:18px;"></p>`,
+    };
+    box.innerHTML = views[mode];
+
+    const on = (id, fn) => { const el = $(id, box); if (el) el.addEventListener("click", fn); };
+
+    on("#cloudLoginBtn", async () => {
+      const email = $("#cloudEmail").value.trim(), pwd = $("#cloudPwd").value;
+      if (!email || !pwd) return gateMsg("Preencha e-mail e senha.");
+      gateMsg("Entrando...", true);
+      const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
+      if (error) return gateMsg(/credentials/i.test(error.message) ? "E-mail ou senha incorretos." : error.message);
+      await ensureMembership();
+    });
+
+    on("#cloudSignupBtn", async () => {
+      const email = $("#cloudEmail").value.trim(), pwd = $("#cloudPwd").value;
+      if (!email || pwd.length < 6) return gateMsg("Informe um e-mail válido e uma senha com 6+ caracteres.");
+      gateMsg("Criando conta...", true);
+      const { data, error } = await sb.auth.signUp({ email, password: pwd });
+      if (error) return gateMsg(/already/i.test(error.message) ? "Este e-mail já tem conta — use Entrar." : error.message);
+      if (data.session) await ensureMembership();
+      else gateMsg("Conta criada! Confirme no link enviado ao seu e-mail e depois volte para Entrar.", true);
+    });
+
+    on("#cloudForgotBtn", async () => {
+      const email = $("#cloudEmail").value.trim();
+      if (!email) return gateMsg("Digite seu e-mail no campo acima e toque de novo em 'Esqueci minha senha'.");
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+      gateMsg(error ? error.message : "📧 Enviamos um link de redefinição para o seu e-mail!", !error);
+    });
+
+    on("#cloudOfflineBtn", () => {
+      const cached = localStorage.getItem(MEMBER_CACHE_KEY);
+      if (!cached) return gateMsg("Sem dados salvos neste aparelho ainda.");
+      cloudMember = JSON.parse(cached);
+      cloudMode = true;
+      login(cloudMember.member_key);
+      toast("📴 Modo offline — sincroniza quando a internet voltar.");
+    });
+
+    on("#localModeBtn", () => {
+      box.style.display = "none";
+      $("#profileList").style.display = "";
+      $("#loginNote").textContent = "🔒 Modo local: dados e senhas só neste aparelho";
+      renderLogin();
+    });
+
+    on("#famCreateBtn", async () => {
+      gateMsg("Criando família...", true);
+      const { data, error } = await sb.rpc("create_family", { family_name: $("#famName").value, my_key: $("#famMyKey").value });
+      if (error) return gateMsg(error.message);
+      state.familyName = data.name;
+      renderCloudGate("invites", data);
+    });
+
+    on("#famJoinBtn", async () => {
+      gateMsg("Entrando na família...", true);
+      const { error } = await sb.rpc("join_family", { code: $("#famCode").value, my_key: $("#famJoinKey").value });
+      if (error) return gateMsg(error.message);
+      await ensureMembership();
+    });
+
+    on("#invitesOkBtn", () => ensureMembership());
+    on("#cloudSignoutBtn", async () => { await sb.auth.signOut(); renderCloudGate("auth"); });
+
+    on("#cloudResetBtn", async () => {
+      const p1 = $("#cloudPwd1").value, p2 = $("#cloudPwd2").value;
+      if (p1.length < 6) return gateMsg("A senha precisa de 6+ caracteres.");
+      if (p1 !== p2) return gateMsg("As senhas não conferem.");
+      const { error } = await sb.auth.updateUser({ password: p1 });
+      if (error) return gateMsg(error.message);
+      toast("✅ Senha redefinida!");
+      await ensureMembership();
+    });
+  }
+
+  async function renderInvitesInConfig() {
+    const box = $("#cfgInviteBox");
+    if (!box) return;
+    if (!cloudMode || !cloudIsAdmin() || !sb) { box.innerHTML = ""; return; }
+    try {
+      const { data, error } = await sb.rpc("get_invites");
+      if (error || !data) return;
+      box.innerHTML = `
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border); font-size:13px;">
+          <strong>🎟️ Códigos de convite</strong>
+          <div style="margin-top:8px; line-height:2.1;">
+            <div>Admin: <span class="recovery-code" style="font-size:14px; padding:3px 9px; display:inline;">${esc(data.admin_code)}</span></div>
+            <div>Dependente: <span class="recovery-code" style="font-size:14px; padding:3px 9px; display:inline;">${esc(data.dep_code)}</span></div>
+          </div>
+        </div>`;
+    } catch { /* offline */ }
+  }
+
+  async function cloudStartup() {
+    if (!cloudAvailable()) {
+      // sem biblioteca — cai no modo local clássico
+      $("#cloudBox").style.display = "none";
+      $("#profileList").style.display = "";
+      renderLogin();
+      return;
+    }
+
+    sb.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") renderCloudGate("reset");
+    });
+
+    let email = "";
+    let hasSession = false;
+    try {
+      const { data } = await sb.auth.getSession();
+      hasSession = !!(data && data.session);
+      email = hasSession ? data.session.user.email : "";
+    } catch { /* offline */ }
+
+    // sempre pedir a senha ao abrir, mesmo com sessão salva
+    renderCloudGate("auth", { email, offline: hasSession && !navigator.onLine ? true : hasSession });
+  }
+
   /* ---------------- init ---------------- */
 
   load();
   applyTheme();
-  renderLogin();
   bindGlobal();
 
   // sempre pedir senha ao abrir: nenhuma sessão anterior é retomada
@@ -2046,4 +2355,6 @@
     state.currentUser = null;
     save();
   }
+
+  cloudStartup();
 })();
