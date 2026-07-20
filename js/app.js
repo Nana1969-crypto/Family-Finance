@@ -2031,6 +2031,23 @@
       location.reload();
     });
 
+    // começar do zero: limpa os dados de exemplo mantendo nomes e categorias;
+    // com conta na nuvem, a limpeza sincroniza para toda a família
+    $("#cfgWipe").addEventListener("click", () => {
+      if (!confirm("Apagar todos os lançamentos, contas, cartões, investimentos, documentos, faturas e sonhos?\n\nOs nomes da família e as categorias serão mantidos. Com conta na nuvem, isso vale para TODOS os aparelhos e não pode ser desfeito.")) return;
+      const fresh = seedState();
+      Object.assign(state, {
+        transactions: [], accounts: [], cards: [], investments: [],
+        documents: [], invoices: [], dreams: [], personalGoals: [],
+        piggy: { saldo: 0, historico: [] },
+        missions: fresh.missions.map((m) => ({ ...m, done: false })),
+        badges: fresh.badges.map((b) => ({ ...b, unlocked: false })),
+      });
+      save();
+      renderPage(currentPage);
+      toast("🧹 Dados de exemplo apagados — a família começa do zero!");
+    });
+
     // dropzones (documentos + faturas)
     setupDropzone("#docDropzone", "#docFileInput", "doc");
     setupDropzone("#invoiceDropzone", "#invoiceFileInput", "invoice");

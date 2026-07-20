@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=8">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b0b0e">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -405,8 +405,11 @@
         </div>
         <div class="panel" style="border-color:rgba(248,113,113,0.3);">
           <div class="panel-title"><h3>⚠️ Zona de atenção</h3></div>
-          <p style="font-size:13px; color:var(--text-3); margin-bottom:12px;">Apaga todos os dados salvos neste navegador (lançamentos, uploads, sonhos) e restaura os dados de demonstração.</p>
-          <button class="btn btn-danger-ghost" id="cfgReset">🔄 Restaurar dados de demonstração</button>
+          <p style="font-size:13px; color:var(--text-3); margin-bottom:12px;"><strong>Começar do zero</strong> apaga os dados de exemplo (lançamentos, contas, cartões, documentos, faturas e sonhos) para toda a família, mantendo nomes e categorias. <strong>Restaurar demonstração</strong> recoloca os dados de exemplo neste aparelho.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-danger-ghost" id="cfgWipe">🧹 Começar do zero (apagar dados de exemplo)</button>
+            <button class="btn btn-ghost" id="cfgReset">🔄 Restaurar dados de demonstração</button>
+          </div>
         </div>
       </section>
 
@@ -569,8 +572,8 @@
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/vendor/supabase.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/vendor/supabase.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js");
