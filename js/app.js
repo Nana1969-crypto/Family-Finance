@@ -825,36 +825,126 @@
   /* ---------------- contas & cartões ---------------- */
 
   function renderAccounts() {
-    $("#accountsList").innerHTML = state.accounts.map((a) => `
+    const rowActions = (kind, id) => `
+      <span class="row-actions" style="margin-left:auto">
+        <button class="mini-btn" data-edit-${kind}="${id}" title="Editar">✎</button>
+        <button class="mini-btn danger" data-del-${kind}="${id}" title="Excluir">🗑</button>
+      </span>`;
+
+    $("#accountsList").innerHTML = state.accounts.length ? state.accounts.map((a) => `
       <div class="mission-item">
         <span class="m-ico">🏦</span>
-        <span><strong>${esc(a.banco)}</strong><span>${esc(a.tipo)} · ${OWNER_LABEL[a.owner]}</span></span>
-        <span class="money" style="margin-left:auto">${fmt(a.saldo)}</span>
-      </div>`).join("");
+        <span style="flex:1"><strong>${esc(a.banco)}</strong><span>${esc(a.tipo)} · ${OWNER_LABEL[a.owner]}</span></span>
+        <span class="money">${fmt(a.saldo)}</span>
+        ${rowActions("acc", a.id)}
+      </div>`).join("")
+      : `<div class="empty-state"><span class="big">🏦</span>Nenhuma conta cadastrada.<br>Toque em <strong>+ Conta</strong> para adicionar a primeira.</div>`;
 
-    $("#cardsList").innerHTML = state.cards.map((c) => {
-      const pct = Math.round((c.usado / c.limite) * 100);
+    $("#cardsList").innerHTML = state.cards.length ? state.cards.map((c) => {
+      const pct = c.limite > 0 ? Math.min(Math.round((c.usado / c.limite) * 100), 100) : 0;
       return `
       <div class="mission-item" style="flex-wrap:wrap;">
         <span class="m-ico">💳</span>
         <span style="flex:1"><strong>${esc(c.nome)}</strong><span>${esc(c.bandeira)} · ${OWNER_LABEL[c.owner]} · fecha dia ${c.fechamento}, vence dia ${c.vencimento}</span></span>
         <span class="money">${fmt(c.usado)} <span style="color:var(--text-3); font-weight:400">/ ${fmt(c.limite)}</span></span>
+        ${rowActions("card", c.id)}
         <div class="progress-track" style="width:100%; margin-top:4px;"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>`;
-    }).join("");
+    }).join("")
+      : `<div class="empty-state"><span class="big">💳</span>Nenhum cartão cadastrado.<br>Toque em <strong>+ Cartão</strong> para adicionar o primeiro.</div>`;
 
-    $("#investList").innerHTML = `
+    $("#investList").innerHTML = state.investments.length ? `
       <table class="data">
-        <thead><tr><th>Ativo</th><th>Tipo</th><th>Proprietário</th><th style="text-align:right">Valor</th></tr></thead>
+        <thead><tr><th>Ativo</th><th>Tipo</th><th>Proprietário</th><th style="text-align:right">Valor</th><th></th></tr></thead>
         <tbody>${state.investments.map((i) => `
           <tr>
             <td><strong>${esc(i.nome)}</strong></td>
             <td style="color:var(--text-3)">${esc(i.tipo)}</td>
             <td><span class="owner-chip">${OWNER_LABEL[i.owner]}</span></td>
             <td style="text-align:right" class="money pos">${fmt(i.valor)}</td>
+            <td><div class="row-actions">
+              <button class="mini-btn" data-edit-inv="${i.id}" title="Editar">✎</button>
+              <button class="mini-btn danger" data-del-inv="${i.id}" title="Excluir">🗑</button>
+            </div></td>
           </tr>`).join("")}
         </tbody>
-      </table>`;
+      </table>`
+      : `<div class="empty-state"><span class="big">📈</span>Nenhum investimento cadastrado.<br>Toque em <strong>+ Investimento</strong> para adicionar o primeiro.</div>`;
+
+    // editar / excluir
+    const bindCrud = (kind, collectionName, label) => {
+      $$(`[data-edit-${kind}]`, $("#page-contas")).forEach((b) => b.addEventListener("click", () =>
+        openAssetModal(kind, b.dataset[`edit${kind.charAt(0).toUpperCase()}${kind.slice(1)}`])));
+      $$(`[data-del-${kind}]`, $("#page-contas")).forEach((b) => b.addEventListener("click", () => {
+        const id = b.dataset[`del${kind.charAt(0).toUpperCase()}${kind.slice(1)}`];
+        const item = state[collectionName].find((x) => x.id === id);
+        if (!item || !confirm(`Excluir ${label} "${item.banco || item.nome}"?`)) return;
+        state[collectionName] = state[collectionName].filter((x) => x.id !== id);
+        save(); renderAccounts(); toast(`${label} excluído(a).`);
+      }));
+    };
+    bindCrud("acc", "accounts", "a conta");
+    bindCrud("card", "cards", "o cartão");
+    bindCrud("inv", "investments", "o investimento");
+  }
+
+  /* ---------------- contas, cartões e investimentos (cadastro) ---------------- */
+
+  const ASSET_CONFIG = {
+    acc:  { collection: "accounts",    form: "#accForm",  title: "#accModalTitle",  novo: "Nova conta bancária", editar: "Editar conta" },
+    card: { collection: "cards",       form: "#cardForm", title: "#cardModalTitle", novo: "Novo cartão de crédito", editar: "Editar cartão" },
+    inv:  { collection: "investments", form: "#invForm",  title: "#invModalTitle",  novo: "Novo investimento", editar: "Editar investimento" },
+  };
+
+  let editingAsset = { kind: null, id: null };
+
+  function openAssetModal(kind, id = null) {
+    const cfg = ASSET_CONFIG[kind];
+    editingAsset = { kind, id };
+    const form = $(cfg.form);
+    form.reset();
+    $(cfg.title).textContent = id ? cfg.editar : cfg.novo;
+    if (id) {
+      const item = state[cfg.collection].find((x) => x.id === id);
+      if (item) {
+        for (const field of form.elements) {
+          if (field.name && item[field.name] !== undefined) field.value = item[field.name];
+        }
+      }
+    }
+    openModal(kind);
+  }
+
+  function saveAsset(kind, formEl) {
+    const cfg = ASSET_CONFIG[kind];
+    const f = new FormData(formEl);
+    const num = (k) => parseFloat(f.get(k)) || 0;
+
+    let data;
+    if (kind === "acc") {
+      data = { banco: f.get("banco").trim(), tipo: f.get("tipo"), owner: f.get("owner"), saldo: num("saldo") };
+    } else if (kind === "card") {
+      data = {
+        nome: f.get("nome").trim(), bandeira: f.get("bandeira"), owner: f.get("owner"),
+        limite: num("limite"), usado: num("usado"),
+        fechamento: parseInt(f.get("fechamento"), 10) || 1,
+        vencimento: parseInt(f.get("vencimento"), 10) || 1,
+      };
+    } else {
+      data = { nome: f.get("nome").trim(), tipo: f.get("tipo"), owner: f.get("owner"), valor: num("valor") };
+    }
+
+    if (editingAsset.id) {
+      Object.assign(state[cfg.collection].find((x) => x.id === editingAsset.id), data);
+      toast("Alterações salvas!");
+    } else {
+      state[cfg.collection].push({ id: uid(), ...data });
+      toast({ acc: "🏦 Conta cadastrada!", card: "💳 Cartão cadastrado!", inv: "📈 Investimento cadastrado!" }[kind]);
+    }
+    editingAsset = { kind: null, id: null };
+    save();
+    closeModals();
+    renderAccounts();
   }
 
   /* ---------------- upload compartilhado (docs + faturas) ---------------- */
@@ -1883,8 +1973,10 @@
       if (g) goto(g.dataset.goto);
       const om = e.target.closest("[data-open-modal]");
       if (om) {
-        if (om.dataset.openModal === "tx") openTxModal();
-        if (om.dataset.openModal === "dream") openDreamModal();
+        const which = om.dataset.openModal;
+        if (which === "tx") openTxModal();
+        else if (which === "dream") openDreamModal();
+        else if (ASSET_CONFIG[which]) openAssetModal(which);
       }
       if (e.target.closest("[data-close-modal]")) closeModals();
     });
@@ -1949,6 +2041,14 @@
     $("#docMetaForm").addEventListener("submit", (e) => {
       e.preventDefault();
       saveUpload(new FormData(e.target));
+    });
+
+    // formulários de conta, cartão e investimento
+    Object.entries(ASSET_CONFIG).forEach(([kind, cfg]) => {
+      $(cfg.form).addEventListener("submit", (e) => {
+        e.preventDefault();
+        saveAsset(kind, e.target);
+      });
     });
 
     // foto do sonho

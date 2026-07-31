@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=8">
+  <link rel="stylesheet" href="css/styles.css?v=9">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b0b0e">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -164,16 +164,25 @@
         </div>
         <div class="grid-2-even">
           <div class="panel">
-            <div class="panel-title"><h3>🏦 Contas bancárias</h3></div>
+            <div class="panel-title">
+              <h3>🏦 Contas bancárias</h3>
+              <button class="btn btn-primary btn-sm" data-open-modal="acc">+ Conta</button>
+            </div>
             <div id="accountsList"></div>
           </div>
           <div class="panel">
-            <div class="panel-title"><h3>💳 Cartões de crédito</h3></div>
+            <div class="panel-title">
+              <h3>💳 Cartões de crédito</h3>
+              <button class="btn btn-primary btn-sm" data-open-modal="card">+ Cartão</button>
+            </div>
             <div id="cardsList"></div>
           </div>
         </div>
         <div class="panel">
-          <div class="panel-title"><h3>📈 Investimentos</h3></div>
+          <div class="panel-title">
+            <h3>📈 Investimentos</h3>
+            <button class="btn btn-primary btn-sm" data-open-modal="inv">+ Investimento</button>
+          </div>
           <div class="table-wrap" id="investList"></div>
         </div>
       </section>
@@ -562,6 +571,111 @@
     </div>
   </div>
 
+  <!-- Conta bancária -->
+  <div class="modal-overlay" id="modal-acc">
+    <div class="modal">
+      <h3 id="accModalTitle">Nova conta bancária</h3>
+      <form id="accForm" class="form-grid">
+        <div class="form-field full">
+          <label>Banco</label>
+          <input name="banco" required placeholder="Ex.: Banco do Brasil, Nubank, Itaú...">
+        </div>
+        <div class="form-field">
+          <label>Tipo de conta</label>
+          <select name="tipo">
+            <option>Conta corrente</option>
+            <option>Conta poupança</option>
+            <option>Conta conjunta</option>
+            <option>Conta salário</option>
+            <option>Conta digital</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Proprietário</label>
+          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select>
+        </div>
+        <div class="form-field full">
+          <label>Saldo atual (R$)</label>
+          <input name="saldo" type="number" step="0.01" required value="0">
+        </div>
+        <div class="modal-actions form-field full">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar conta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cartão de crédito -->
+  <div class="modal-overlay" id="modal-card">
+    <div class="modal">
+      <h3 id="cardModalTitle">Novo cartão de crédito</h3>
+      <form id="cardForm" class="form-grid">
+        <div class="form-field full">
+          <label>Nome do cartão</label>
+          <input name="nome" required placeholder="Ex.: Nubank Roxinho, Itaú Click...">
+        </div>
+        <div class="form-field">
+          <label>Bandeira</label>
+          <select name="bandeira"><option>Mastercard</option><option>Visa</option><option>Elo</option><option>American Express</option><option>Hipercard</option><option>Outra</option></select>
+        </div>
+        <div class="form-field">
+          <label>Proprietário</label>
+          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select>
+        </div>
+        <div class="form-field">
+          <label>Limite total (R$)</label>
+          <input name="limite" type="number" step="0.01" min="0" required>
+        </div>
+        <div class="form-field">
+          <label>Valor já usado (R$)</label>
+          <input name="usado" type="number" step="0.01" min="0" value="0">
+        </div>
+        <div class="form-field">
+          <label>Dia do fechamento</label>
+          <input name="fechamento" type="number" min="1" max="31" required placeholder="28">
+        </div>
+        <div class="form-field">
+          <label>Dia do vencimento</label>
+          <input name="vencimento" type="number" min="1" max="31" required placeholder="10">
+        </div>
+        <div class="modal-actions form-field full">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar cartão</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Investimento -->
+  <div class="modal-overlay" id="modal-inv">
+    <div class="modal">
+      <h3 id="invModalTitle">Novo investimento</h3>
+      <form id="invForm" class="form-grid">
+        <div class="form-field full">
+          <label>Nome do ativo</label>
+          <input name="nome" required placeholder="Ex.: Tesouro Selic, CDB, Reserva de emergência...">
+        </div>
+        <div class="form-field">
+          <label>Tipo</label>
+          <select name="tipo"><option>Renda fixa</option><option>Renda variável</option><option>Liquidez diária</option><option>Previdência</option><option>Fundo imobiliário</option><option>Criptomoeda</option><option>Outro</option></select>
+        </div>
+        <div class="form-field">
+          <label>Proprietário</label>
+          <select name="owner"><option value="familia">👨‍👩‍👧 Família</option><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select>
+        </div>
+        <div class="form-field full">
+          <label>Valor aplicado (R$)</label>
+          <input name="valor" type="number" step="0.01" min="0" required>
+        </div>
+        <div class="modal-actions form-field full">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar investimento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Autenticação -->
   <div class="modal-overlay" id="modal-auth">
     <div class="modal" style="max-width:420px;">
@@ -572,8 +686,8 @@
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/vendor/supabase.js?v=8"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/vendor/supabase.js?v=9"></script>
+  <script src="js/app.js?v=9"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js");
