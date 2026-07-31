@@ -1542,6 +1542,117 @@
     return rows;
   }
 
+  /* ---- PDF: extrai o texto e reconstrói as linhas do extrato ---- */
+
+  let pdfLib = null;
+
+  async function loadPdfLib() {
+    if (pdfLib) return pdfLib;
+    const base = new URL("js/vendor/pdfjs/", location.href).href;
+    pdfLib = await import(base + "pdf.min.mjs");
+    pdfLib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.mjs";
+    return pdfLib;
+  }
+
+  // agrupa os fragmentos de texto por linha (mesma altura) e ordena por coluna
+  async function pdfToLines(buffer) {
+    const pdfjs = await loadPdfLib();
+    const doc = await pdfjs.getDocument({ data: buffer }).promise;
+    const linhas = [];
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const content = await page.getTextContent();
+      const porAltura = new Map();
+      for (const item of content.items) {
+        if (!item.str || !item.str.trim()) continue;
+        const y = Math.round(item.transform[5] / 3); // tolerância p/ desalinho da linha
+        if (!porAltura.has(y)) porAltura.set(y, []);
+        porAltura.get(y).push({ x: item.transform[4], texto: item.str });
+      }
+      [...porAltura.entries()]
+        .sort((a, b) => b[0] - a[0]) // de cima para baixo
+        .forEach(([, partes]) => {
+          const linha = partes.sort((a, b) => a.x - b.x).map((p) => p.texto).join(" ");
+          if (linha.trim()) linhas.push(linha.replace(/\s+/g, " ").trim());
+        });
+    }
+    return linhas;
+  }
+
+  const RE_DATA = /(\d{2})[\/.\-](\d{2})(?:[\/.\-](\d{2,4}))?/;
+  // "R$" precisa vir completo — senão o "R" final de palavras como ANTERIOR vira parte do valor
+  const RE_DINHEIRO = /(-)?(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})\s?([DC])?\b/g;
+  // linhas de saldo/total não são lançamentos
+  const RE_NAO_LANCAMENTO = /\b(saldo|total|subtotal|limite|extrato|per[íi]odo|ag[êe]ncia|vencimento da fatura)\b/i;
+
+  function parsePdfExtrato(linhas) {
+    const anoPadrao = new Date().getFullYear();
+    const brutas = [];
+
+    for (const linha of linhas) {
+      const mData = linha.match(RE_DATA);
+      if (!mData) continue;
+      if (RE_NAO_LANCAMENTO.test(linha)) continue;
+
+      const valores = [...linha.matchAll(RE_DINHEIRO)];
+      if (!valores.length) continue;
+
+      const ano = mData[3] ? (mData[3].length === 2 ? `20${mData[3]}` : mData[3]) : String(anoPadrao);
+      const data = `${ano}-${mData[2]}-${mData[1]}`;
+      if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(data)) continue;
+
+      // primeiro valor = lançamento; último (quando há 2+) = saldo da conta
+      const primeiro = valores[0];
+      const valor = parseFloat(primeiro[2].replace(/\./g, "").replace(",", "."));
+      if (!valor) continue;
+
+      let sinal = null;
+      if (primeiro[1] === "-") sinal = "despesa";
+      else if (primeiro[3] === "D") sinal = "despesa";
+      else if (primeiro[3] === "C") sinal = "receita";
+
+      let saldo = null;
+      if (valores.length > 1) {
+        const ult = valores[valores.length - 1];
+        saldo = parseFloat(ult[2].replace(/\./g, "").replace(",", ".")) * (ult[1] === "-" || ult[3] === "D" ? -1 : 1);
+      }
+
+      // descrição: a linha sem a data e sem os valores
+      let desc = linha
+        .replace(mData[0], " ")
+        .replace(RE_DINHEIRO, " ")
+        .replace(/\bR\$\b/gi, " ")
+        .replace(/[|;]/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (desc.length < 2) desc = "Lançamento importado";
+
+      brutas.push({ data, desc, valor, sinal, saldo });
+    }
+
+    // sem sinal explícito, deduz pela variação do saldo entre linhas
+    for (let i = 0; i < brutas.length; i++) {
+      const r = brutas[i];
+      if (r.sinal) continue;
+      const anterior = brutas[i - 1];
+      if (r.saldo !== null && anterior && anterior.saldo !== null) {
+        const delta = r.saldo - anterior.saldo;
+        if (Math.abs(delta - r.valor) < 0.02) r.sinal = "receita";
+        else if (Math.abs(delta + r.valor) < 0.02) r.sinal = "despesa";
+      } else if (r.saldo !== null && !anterior) {
+        const proximo = brutas[i + 1];
+        if (proximo && proximo.saldo !== null) {
+          const delta = proximo.saldo - r.saldo;
+          if (Math.abs(delta - proximo.valor) < 0.02 || Math.abs(delta + proximo.valor) < 0.02) {
+            // o saldo da própria linha é coerente; sem mais pistas, mantém despesa
+          }
+        }
+      }
+    }
+
+    return brutas.map((r) => ({ data: r.data, desc: r.desc, valor: Math.abs(r.valor), tipo: r.sinal || "despesa" }));
+  }
+
   function parseOfxExtrato(text) {
     const rows = [];
     const blocks = text.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi) || [];
@@ -1571,16 +1682,31 @@
   }
 
   async function handleExtratoFile(file) {
-    // extratos brasileiros costumam vir em Latin-1; tenta UTF-8 e recua se necessário
     const buf = await file.arrayBuffer();
-    let text;
-    try { text = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
-    catch { text = new TextDecoder("iso-8859-1").decode(buf); }
+    const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
 
-    const isOfx = /\.ofx$/i.test(file.name) || /<OFX/i.test(text);
-    const parsed = isOfx ? parseOfxExtrato(text) : parseCsvExtrato(text);
+    let parsed;
+    if (isPdf) {
+      toast("📄 Lendo o PDF, um instante...");
+      try {
+        parsed = parsePdfExtrato(await pdfToLines(buf));
+      } catch (e) {
+        toast("⚠️ Não consegui ler esse PDF. Se ele for digitalizado (foto), exporte o extrato em CSV ou OFX.");
+        return;
+      }
+    } else {
+      // extratos brasileiros costumam vir em Latin-1; tenta UTF-8 e recua se necessário
+      let text;
+      try { text = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+      catch { text = new TextDecoder("iso-8859-1").decode(buf); }
+      const isOfx = /\.ofx$/i.test(file.name) || /<OFX/i.test(text);
+      parsed = isOfx ? parseOfxExtrato(text) : parseCsvExtrato(text);
+    }
+
     if (!parsed.length) {
-      toast("⚠️ Não encontrei lançamentos nesse arquivo. Exporte o extrato em CSV ou OFX no app do banco.");
+      toast(isPdf
+        ? "⚠️ Não encontrei lançamentos nesse PDF. Confira se é o extrato (não o comprovante) ou tente o formato CSV/OFX."
+        : "⚠️ Não encontrei lançamentos nesse arquivo. Exporte o extrato em CSV, OFX ou PDF no app do banco.");
       return;
     }
     importRows = parsed.map((r) => {

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=10">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b0b0e">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -121,15 +121,15 @@
         <div class="page-header">
           <div>
             <h2>Importar extrato</h2>
-            <p>Baixe o extrato em CSV ou OFX no app do seu banco e solte aqui — o Family Finance organiza tudo nos lançamentos.</p>
+            <p>Baixe o extrato em PDF, CSV ou OFX no app do seu banco e solte aqui — o Family Finance lê e organiza tudo nos lançamentos.</p>
           </div>
         </div>
         <div class="shared-banner">🔒 <span><strong>Privacidade total:</strong> o arquivo é lido dentro do seu navegador e não é enviado a nenhum servidor — nem ao seu banco.</span></div>
         <div class="dropzone" id="importDropzone">
           <span class="dz-icon">📥</span>
           <strong>Arraste o extrato aqui</strong> ou clique para selecionar
-          <span class="dz-hint">CSV ou OFX exportado do seu banco (Nubank, Itaú, BB, Bradesco, Inter...)</span>
-          <input type="file" id="importFileInput" accept=".csv,.ofx,.txt" hidden>
+          <span class="dz-hint">PDF, CSV ou OFX exportado do seu banco (Nubank, Itaú, BB, Bradesco, Inter...)</span>
+          <input type="file" id="importFileInput" accept=".pdf,.csv,.ofx,.txt" hidden>
         </div>
         <div class="panel" id="importPreview" style="display:none;">
           <div class="panel-title">
@@ -686,8 +686,8 @@
   <div class="toast" id="toast"></div>
   <div class="chart-tooltip" id="chartTooltip"></div>
 
-  <script src="js/vendor/supabase.js?v=9"></script>
-  <script src="js/app.js?v=9"></script>
+  <script src="js/vendor/supabase.js?v=10"></script>
+  <script src="js/app.js?v=10"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js");

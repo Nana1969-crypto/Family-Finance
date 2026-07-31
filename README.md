@@ -35,7 +35,7 @@ Os dados ficam salvos no navegador (`localStorage`) — nada sai da sua máquina
 |---|---|
 | 📊 **Dashboard** | Patrimônio, receitas/despesas do mês, saldo, economia, investimentos, fluxo de caixa (6 meses), despesas por categoria, próximos vencimentos e insights inteligentes |
 | 💸 **Lançamentos** | Receitas e despesas com proprietário (Admin/Família) e tags coloridas 🔴🟠🟡🟢🔵🟣 com filtro por cor |
-| 📥 **Importar extrato** | Solte o CSV/OFX baixado do seu banco: o app lê os lançamentos no navegador (sem enviar nada a servidores), sugere categorias automaticamente, detecta duplicados e importa com um clique |
+| 📥 **Importar extrato** | Solte o **PDF**, CSV ou OFX baixado do seu banco: o app lê os lançamentos no navegador (sem enviar nada a servidores), sugere categorias automaticamente, detecta duplicados e importa com um clique |
 | 🏦 **Contas & Cartões** | Múltiplos bancos, saldos, cartões com limite/fechamento/vencimento e investimentos |
 | 🧾 **Faturas** ⭐ | Área **compartilhada entre pai e mãe** para upload de faturas (cartão, energia, água, escola...) com competência, vencimento, valor e status |
 | 📂 **Documentos** ⭐ | Cofre digital **compartilhado entre pai e mãe**: contratos, apólices, comprovantes — upload por arrastar-e-soltar, categorias, preview e download |
