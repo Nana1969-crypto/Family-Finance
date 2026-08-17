@@ -2606,17 +2606,49 @@
 
   /* ---------------- init ---------------- */
 
-  load();
-  applyTheme();
-  bindGlobal();
+  /* O GitHub Pages ignora o "?v=" ao servir arquivos, então uma página antiga
+     guardada em cache acaba carregando o JavaScript novo. Sem os elementos que
+     o código novo espera, a inicialização quebrava e a tela ficava vazia.
+     Detectamos a divergência e buscamos a versão correta — mas só depois que a
+     página terminar de carregar, para não interromper o carregamento no meio. */
+  const APP_VERSION = "12";
+  const metaVersion = document.querySelector('meta[name="ff-version"]');
+  const precisaAtualizar = !metaVersion || metaVersion.content !== APP_VERSION;
 
-  // sempre pedir senha ao abrir: nenhuma sessão anterior é retomada
-  if (state.currentUser) {
-    state.currentUser = null;
-    save();
+  if (!precisaAtualizar) {
+    sessionStorage.removeItem("ff-healing");
+    if (location.search.includes("ff=")) history.replaceState({}, "", location.pathname);
+  } else if (!sessionStorage.getItem("ff-healing")) {
+    sessionStorage.setItem("ff-healing", "1");
+    const buscarVersaoNova = () => {
+      const limpar = [];
+      if (window.caches) limpar.push(caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k)))));
+      if (navigator.serviceWorker) {
+        limpar.push(navigator.serviceWorker.getRegistrations().then((rs) => Promise.all(rs.map((r) => r.unregister()))));
+      }
+      Promise.all(limpar.map((pr) => pr.catch(() => {})))
+        .then(() => location.replace(location.pathname + "?ff=" + APP_VERSION))
+        .catch(() => {});
+    };
+    if (document.readyState === "complete") setTimeout(buscarVersaoNova, 300);
+    else window.addEventListener("load", () => setTimeout(buscarVersaoNova, 300));
   }
 
-  cloudStartup();
+  // Cada etapa é isolada: uma falha em qualquer uma não pode impedir
+  // que a tela de entrada apareça.
+  try { load(); } catch (e) { console.error("load()", e); }
+  try { applyTheme(); } catch (e) { console.error("applyTheme()", e); }
+  try { bindGlobal(); } catch (e) { console.error("bindGlobal()", e); }
+
+  // sempre pedir senha ao abrir: nenhuma sessão anterior é retomada
+  try {
+    if (state.currentUser) {
+      state.currentUser = null;
+      save();
+    }
+  } catch (e) { console.error("reset sessão", e); }
+
+  try { cloudStartup(); } catch (e) { console.error("cloudStartup()", e); }
 
   // rede de segurança: se por qualquer motivo a tela de entrada não aparecer,
   // desenha o formulário (ou o modo local) em vez de deixar o cartão vazio
