@@ -2562,29 +2562,46 @@
     } catch { /* offline */ }
   }
 
+  function showLocalMode() {
+    const box = $("#cloudBox");
+    if (box) box.style.display = "none";
+    $("#profileList").style.display = "";
+    $("#loginNote").textContent = "🔒 Modo local: dados e senhas só neste aparelho";
+    renderLogin();
+  }
+
   async function cloudStartup() {
     if (!cloudAvailable()) {
-      // sem biblioteca — cai no modo local clássico
-      $("#cloudBox").style.display = "none";
-      $("#profileList").style.display = "";
-      renderLogin();
+      showLocalMode(); // sem a biblioteca da nuvem, usa o modo local clássico
       return;
     }
 
-    sb.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") renderCloudGate("reset");
-    });
+    // O formulário é desenhado IMEDIATAMENTE: nenhuma consulta ao servidor pode
+    // atrasar a entrada. (Antes, uma sessão presa deixava o cartão vazio.)
+    renderCloudGate("auth", {});
 
-    let email = "";
-    let hasSession = false;
     try {
-      const { data } = await sb.auth.getSession();
-      hasSession = !!(data && data.session);
-      email = hasSession ? data.session.user.email : "";
-    } catch { /* offline */ }
+      sb.auth.onAuthStateChange((event) => {
+        if (event === "PASSWORD_RECOVERY") renderCloudGate("reset");
+      });
+    } catch { /* segue sem o atalho de recuperação */ }
 
-    // sempre pedir a senha ao abrir, mesmo com sessão salva
-    renderCloudGate("auth", { email, offline: hasSession && !navigator.onLine ? true : hasSession });
+    // Depois, sem travar nada: preenche o e-mail já usado e oferece o modo
+    // offline. Desiste em 4s se o servidor não responder.
+    try {
+      const res = await Promise.race([
+        sb.auth.getSession(),
+        new Promise((r) => setTimeout(() => r(null), 4000)),
+      ]);
+      const session = res && res.data && res.data.session;
+      const campo = $("#cloudEmail");
+      if (session && campo && !campo.value) {
+        renderCloudGate("auth", {
+          email: session.user.email || "",
+          offline: !!localStorage.getItem(MEMBER_CACHE_KEY),
+        });
+      }
+    } catch { /* sem sessão anterior — o login normal continua disponível */ }
   }
 
   /* ---------------- init ---------------- */
@@ -2600,4 +2617,14 @@
   }
 
   cloudStartup();
+
+  // rede de segurança: se por qualquer motivo a tela de entrada não aparecer,
+  // desenha o formulário (ou o modo local) em vez de deixar o cartão vazio
+  setTimeout(() => {
+    const box = $("#cloudBox");
+    if (!box || state.currentUser) return;
+    if (box.style.display === "none" || box.innerHTML.trim()) return;
+    if (sb) renderCloudGate("auth", {});
+    else showLocalMode();
+  }, 5000);
 })();

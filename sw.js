@@ -2,20 +2,26 @@
    Estratégia: rede primeiro (o app nunca fica preso numa versão antiga),
    com cache como reserva para funcionar offline. */
 
-const CACHE = "family-finance-v10";
+const CACHE = "family-finance-v11";
 const SHELL = [
   "./",
   "index.html",
-  "css/styles.css?v=10",
-  "js/app.js?v=10",
-  "js/vendor/supabase.js?v=10",
+  "css/styles.css?v=11",
+  "js/app.js?v=11",
+  "js/vendor/supabase.js?v=11",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
 ];
 
+// allSettled: um arquivo indisponível não pode impedir a instalação inteira,
+// senão o usuário fica preso na versão antiga do app
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => Promise.allSettled(SHELL.map((url) => c.add(url))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (e) => {
