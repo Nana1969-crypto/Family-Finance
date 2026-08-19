@@ -2,13 +2,13 @@
    Estratégia: rede primeiro (o app nunca fica preso numa versão antiga),
    com cache como reserva para funcionar offline. */
 
-const CACHE = "family-finance-v14";
+const CACHE = "family-finance-v15";
 const SHELL = [
   "./",
   "index.html",
-  "css/styles.css?v=14",
-  "js/app.js?v=14",
-  "js/vendor/supabase.js?v=14",
+  "css/styles.css?v=15",
+  "js/app.js?v=15",
+  "js/vendor/supabase.js?v=15",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",

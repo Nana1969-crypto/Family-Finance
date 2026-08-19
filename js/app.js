@@ -2463,9 +2463,10 @@
         <div class="form-field" style="text-align:left"><label>E-mail</label><input id="cloudEmail" type="email" autocomplete="email" value="${esc(extra.email || "")}"></div>
         <div class="form-field" style="text-align:left"><label>Senha</label><input id="cloudPwd" type="password" autocomplete="current-password"></div>
         <div style="display:flex; gap:10px; margin-top:14px;">
-          <button class="btn btn-primary" id="cloudLoginBtn" style="flex:1">Entrar</button>
-          <button class="btn btn-ghost" id="cloudSignupBtn" style="flex:1">Criar conta</button>
+          <button type="button" class="btn btn-primary" id="cloudLoginBtn" style="flex:1">Entrar</button>
+          <button type="button" class="btn btn-green" id="cloudSignupBtn" style="flex:1">Criar conta</button>
         </div>
+        <p style="font-size:11.5px; color:var(--text-3); margin-top:8px; text-align:center;">Primeiro acesso? Use <strong>Criar conta</strong>.</p>
         <button class="icon-btn" id="cloudForgotBtn" style="margin-top:10px; width:100%">Esqueci minha senha</button>
         ${extra.offline ? `<button class="btn btn-green" id="cloudOfflineBtn" style="margin-top:10px; width:100%">📴 Entrar offline (dados deste aparelho)</button>` : ""}
         <p id="cloudMsg" class="gate-msg"></p>
@@ -2508,25 +2509,52 @@
     box.innerHTML = views[mode];
     if (mode === "auth") checkCloudStatus();
 
+    // o cursor já começa no primeiro campo, e o aviso some assim que a pessoa
+    // começa a digitar — senão um erro antigo fica na tela confundindo
+    const primeiro = box.querySelector("input");
+    if (primeiro) setTimeout(() => primeiro.focus(), 60);
+    $$("input", box).forEach((campo) => campo.addEventListener("input", () => gateMsg("")));
+
     const on = (id, fn) => { const el = $(id, box); if (el) el.addEventListener("click", fn); };
 
     on("#cloudLoginBtn", async () => {
       const email = $("#cloudEmail").value.trim(), pwd = $("#cloudPwd").value;
       if (!email || !pwd) return gateMsg("Preencha e-mail e senha.");
       gateMsg("Entrando...", true);
-      const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
-      if (error) return gateMsg(/credentials/i.test(error.message) ? "E-mail ou senha incorretos." : error.message);
-      await ensureMembership();
+      try {
+        const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
+        if (error) {
+          return gateMsg(/credentials/i.test(error.message)
+            ? "E-mail ou senha incorretos. É seu primeiro acesso? Toque em “Criar conta”."
+            : (error.message || "Não consegui entrar. Tente de novo."));
+        }
+        await ensureMembership();
+      } catch (e) {
+        gateMsg("Falha ao entrar: " + ((e && e.message) || "sem conexão com o servidor"));
+      }
     });
 
+    // qualquer falha aqui precisa virar mensagem na tela: um erro silencioso
+    // faz o botão parecer que "não funciona"
     on("#cloudSignupBtn", async () => {
       const email = $("#cloudEmail").value.trim(), pwd = $("#cloudPwd").value;
-      if (!email || pwd.length < 6) return gateMsg("Informe um e-mail válido e uma senha com 6+ caracteres.");
-      gateMsg("Criando conta...", true);
-      const { data, error } = await sb.auth.signUp({ email, password: pwd });
-      if (error) return gateMsg(/already/i.test(error.message) ? "Este e-mail já tem conta — use Entrar." : error.message);
-      if (data.session) await ensureMembership();
-      else gateMsg("Conta criada! Confirme no link enviado ao seu e-mail e depois volte para Entrar.", true);
+      if (!email.includes("@")) return gateMsg("Digite um e-mail válido no campo acima.");
+      if (pwd.length < 6) return gateMsg("A senha precisa ter pelo menos 6 caracteres.");
+      gateMsg("Criando conta…", true);
+      try {
+        const { data, error } = await sb.auth.signUp({ email, password: pwd });
+        if (error) {
+          const m = error.message || "";
+          if (/already/i.test(m)) return gateMsg("Este e-mail já tem conta aqui — use “Entrar”.");
+          if (/signups? not allowed|disabled/i.test(m)) return gateMsg("O servidor está com o cadastro desativado (Supabase → Sign In / Providers).");
+          if (/rate limit/i.test(m)) return gateMsg("Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.");
+          return gateMsg("Não consegui criar a conta: " + (m || "erro desconhecido"));
+        }
+        if (data && data.session) await ensureMembership();
+        else gateMsg("Conta criada! Confirme pelo link enviado ao seu e-mail e depois use “Entrar”.", true);
+      } catch (e) {
+        gateMsg("Falha ao criar a conta: " + ((e && e.message) || "sem conexão com o servidor"));
+      }
     });
 
     on("#cloudForgotBtn", async () => {
@@ -2648,7 +2676,7 @@
      o código novo espera, a inicialização quebrava e a tela ficava vazia.
      Detectamos a divergência e buscamos a versão correta — mas só depois que a
      página terminar de carregar, para não interromper o carregamento no meio. */
-  const APP_VERSION = "14";
+  const APP_VERSION = "15";
   const metaVersion = document.querySelector('meta[name="ff-version"]');
   const precisaAtualizar = !metaVersion || metaVersion.content !== APP_VERSION;
 
