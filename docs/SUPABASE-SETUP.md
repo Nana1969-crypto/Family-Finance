@@ -1,7 +1,7 @@
 # Configuração do Supabase (uma única vez)
 
-O app já vem com a URL e a chave pública do projeto **finanças familiares**
-configuradas. Faltam 3 passos no painel do Supabase, feitos pelo dono do projeto:
+O app já vem com a URL e a chave publicável do projeto **family-finance**
+(região South America / São Paulo) configuradas. Faltam 3 passos no painel do Supabase, feitos pelo dono do projeto:
 
 ## 1. Criar as tabelas e regras de segurança
 

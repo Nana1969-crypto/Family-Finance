@@ -2291,8 +2291,8 @@
 
   /* ---------------- nuvem (Supabase): login por e-mail + sincronização ---------------- */
 
-  const SUPABASE_URL = "https://abjxpknfoborkhoawnyb.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_kwHHCkVd3tNSUdOkqKCVKw_83uY5VXU";
+  const SUPABASE_URL = "https://sxqqdbxeguiavrfvcque.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_wXXmZuXOg5RRRr3M-Ztb9A_UZ201NKO";
 
   // separação imposta também no servidor (RLS): dependente não lê o escopo 'admin'
   const ADMIN_SCOPE_KEYS = ["transactions", "accounts", "cards", "investments", "documents", "invoices", "customCategories"];
@@ -2305,7 +2305,9 @@
   let pushTimer = null;
   let suppressPush = false;
 
-  const MEMBER_CACHE_KEY = "ff-cloud-member";
+  // a chave inclui o projeto: se a família mudar de projeto Supabase, o cache
+  // antigo é naturalmente ignorado em vez de confundir o modo offline
+  const MEMBER_CACHE_KEY = "ff-cloud-member-" + SUPABASE_URL.replace(/^https:\/\/|\.supabase\.co\/?$/g, "");
 
   function cloudAvailable() {
     if (sb) return true;
@@ -2611,7 +2613,7 @@
      o código novo espera, a inicialização quebrava e a tela ficava vazia.
      Detectamos a divergência e buscamos a versão correta — mas só depois que a
      página terminar de carregar, para não interromper o carregamento no meio. */
-  const APP_VERSION = "12";
+  const APP_VERSION = "13";
   const metaVersion = document.querySelector('meta[name="ff-version"]');
   const precisaAtualizar = !metaVersion || metaVersion.content !== APP_VERSION;
 
