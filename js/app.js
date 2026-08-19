@@ -2417,7 +2417,40 @@
 
   function gateMsg(msg, ok) {
     const el = $("#cloudMsg");
-    if (el) { el.textContent = msg || ""; el.style.color = ok ? "var(--green-accent)" : "var(--tag-red)"; }
+    if (!el) return;
+    el.textContent = msg || "";
+    el.className = msg ? (ok ? "gate-msg ok" : "gate-msg erro") : "gate-msg";
+  }
+
+  /* Diagnóstico da nuvem: o app pergunta ao servidor se ele está acessível e
+     se o cadastro por e-mail está liberado, e mostra o resultado na tela de
+     entrada. Sem isso, um servidor mal configurado parece "botão que não funciona". */
+  async function checkCloudStatus() {
+    const el = $("#cloudStatus");
+    if (!el) return;
+    el.className = "cloud-status";
+    el.textContent = "Verificando o servidor…";
+    try {
+      const res = await fetch(SUPABASE_URL + "/auth/v1/settings", { headers: { apikey: SUPABASE_KEY } });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const s = await res.json();
+
+      const problemas = [];
+      if (s.disable_signup) problemas.push("Criar conta está desativado — ligue “Allow new users to sign up”.");
+      if (s.external && s.external.email === false) problemas.push("Login por e-mail está desativado — ligue “Enable email provider”.");
+      if (s.mailer_autoconfirm === false) problemas.push("O servidor exige confirmação por e-mail — desligue “Confirm email”.");
+
+      if (problemas.length) {
+        el.className = "cloud-status aviso";
+        el.innerHTML = "⚠️ <strong>Falta ajustar no Supabase:</strong><br>" + problemas.map(esc).join("<br>");
+      } else {
+        el.className = "cloud-status ok";
+        el.textContent = "☁️ Servidor conectado — pode criar sua conta";
+      }
+    } catch (e) {
+      el.className = "cloud-status erro";
+      el.innerHTML = "⚠️ <strong>Não consegui falar com o servidor.</strong><br>Confira sua internet e tente de novo.";
+    }
   }
 
   function renderCloudGate(mode, extra = {}) {
@@ -2435,7 +2468,8 @@
         </div>
         <button class="icon-btn" id="cloudForgotBtn" style="margin-top:10px; width:100%">Esqueci minha senha</button>
         ${extra.offline ? `<button class="btn btn-green" id="cloudOfflineBtn" style="margin-top:10px; width:100%">📴 Entrar offline (dados deste aparelho)</button>` : ""}
-        <p id="cloudMsg" style="font-size:12.5px; margin-top:10px; min-height:18px;"></p>
+        <p id="cloudMsg" class="gate-msg"></p>
+        <div id="cloudStatus" class="cloud-status"></div>
         <button class="icon-btn" id="localModeBtn" style="width:100%; opacity:.75">Usar sem conta (modo local neste aparelho)</button>`,
       family: `
         <p class="auth-sub" style="text-align:left">Conta criada! Agora conecte-se à sua família:</p>
@@ -2453,7 +2487,7 @@
             <select id="famJoinKey"><option value="pai">👨 Pai</option><option value="mae">👩 Mãe</option></select></div>
           <button class="btn btn-green" id="famJoinBtn" style="width:100%">Entrar na família</button>
         </div>
-        <p id="cloudMsg" style="font-size:12.5px; margin-top:10px; min-height:18px;"></p>
+        <p id="cloudMsg" class="gate-msg"></p>
         <button class="icon-btn" id="cloudSignoutBtn" style="width:100%; opacity:.75">Sair da conta</button>`,
       invites: `
         <h3 style="font-size:17px; margin-bottom:8px;">🎟️ Convites da família</h3>
@@ -2469,9 +2503,10 @@
         <div class="form-field" style="text-align:left"><label>Nova senha (mín. 6 caracteres)</label><input id="cloudPwd1" type="password" autocomplete="new-password"></div>
         <div class="form-field" style="text-align:left"><label>Confirmar senha</label><input id="cloudPwd2" type="password" autocomplete="new-password"></div>
         <button class="btn btn-primary" id="cloudResetBtn" style="width:100%; margin-top:10px;">Salvar nova senha</button>
-        <p id="cloudMsg" style="font-size:12.5px; margin-top:10px; min-height:18px;"></p>`,
+        <p id="cloudMsg" class="gate-msg"></p>`,
     };
     box.innerHTML = views[mode];
+    if (mode === "auth") checkCloudStatus();
 
     const on = (id, fn) => { const el = $(id, box); if (el) el.addEventListener("click", fn); };
 
@@ -2613,7 +2648,7 @@
      o código novo espera, a inicialização quebrava e a tela ficava vazia.
      Detectamos a divergência e buscamos a versão correta — mas só depois que a
      página terminar de carregar, para não interromper o carregamento no meio. */
-  const APP_VERSION = "13";
+  const APP_VERSION = "14";
   const metaVersion = document.querySelector('meta[name="ff-version"]');
   const precisaAtualizar = !metaVersion || metaVersion.content !== APP_VERSION;
 

@@ -1136,3 +1136,39 @@ table.data tr:hover td { background: var(--surface-2); }
   margin-bottom: 18px;
   user-select: all;
 }
+
+/* ---------- Tela de entrada: mensagens e status do servidor ---------- */
+.gate-msg {
+  font-size: 13px;
+  margin-top: 10px;
+  min-height: 18px;
+  line-height: 1.45;
+  border-radius: 10px;
+  padding: 0;
+}
+
+.gate-msg.ok,
+.gate-msg.erro {
+  padding: 9px 12px;
+  font-weight: 500;
+}
+
+.gate-msg.ok { background: var(--green-soft); color: var(--green-accent); }
+.gate-msg.erro { background: var(--tag-red-bg); color: var(--tag-red); }
+
+.cloud-status {
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+}
+
+.cloud-status:empty { display: none; }
+.cloud-status.ok { background: var(--green-soft); color: var(--green-accent); border-color: transparent; }
+.cloud-status.aviso { background: var(--tag-yellow-bg); color: var(--tag-yellow); border-color: transparent; }
+.cloud-status.erro { background: var(--tag-red-bg); color: var(--tag-red); border-color: transparent; }
